@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   // Handle login form submission
-  loginForm.addEventListener('submit', function (e) {
+  loginForm.addEventListener('submit', async function (e) {
     e.preventDefault()
 
     const email = document.getElementById('loginEmail').value
@@ -44,16 +44,41 @@ document.addEventListener('DOMContentLoaded', function () {
       return
     }
 
-    // For now, just show a success message (we'll connect to backend later)
-    console.log('Login attempt:', { email, password: '***' })
-    showMessage('Login functionality coming soon! 🚧', 'success')
+    try {
+      showMessage('Logging in...', 'success')
 
-    // TODO: Send to backend for authentication
-    // loginUser(email, password);
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        // Store token and user info
+        localStorage.setItem('token', data.token)
+        localStorage.setItem('user', JSON.stringify(data.user))
+
+        showMessage('Login successful! Redirecting...', 'success')
+
+        // Redirect to dashboard (we'll create this later)
+        setTimeout(() => {
+          window.location.href = 'dashboard.html'
+        }, 1500)
+      } else {
+        showMessage(data.message || 'Login failed', 'error')
+      }
+    } catch (error) {
+      console.error('Login error:', error)
+      showMessage('Network error. Please try again.', 'error')
+    }
   })
 
   // Handle signup form submission
-  signupForm.addEventListener('submit', function (e) {
+  signupForm.addEventListener('submit', async function (e) {
     e.preventDefault()
 
     const username = document.getElementById('signupUsername').value
@@ -77,12 +102,37 @@ document.addEventListener('DOMContentLoaded', function () {
       return
     }
 
-    // For now, just show a success message (we'll connect to backend later)
-    console.log('Signup attempt:', { username, email, password: '***' })
-    showMessage('Account creation functionality coming soon! 🚧', 'success')
+    try {
+      showMessage('Creating account...', 'success')
 
-    // TODO: Send to backend for registration
-    // registerUser(username, email, password);
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, email, password }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        // Store token and user info
+        localStorage.setItem('token', data.token)
+        localStorage.setItem('user', JSON.stringify(data.user))
+
+        showMessage('Account created successfully! Redirecting...', 'success')
+
+        // Redirect to dashboard
+        setTimeout(() => {
+          window.location.href = 'dashboard.html'
+        }, 1500)
+      } else {
+        showMessage(data.message || 'Registration failed', 'error')
+      }
+    } catch (error) {
+      console.error('Registration error:', error)
+      showMessage('Network error. Please try again.', 'error')
+    }
   })
 
   // Utility function to show messages

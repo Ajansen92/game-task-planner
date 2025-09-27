@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard - Game Task Planner</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/dashboard.css" />
+  </head>
+  <body>
+    <nav class="dashboard-nav">
+      <div class="nav-brand">
+        <h2>🎮 Game Task Planner</h2>
+      </div>
+      <div class="nav-user">
+        <span id="welcomeUser">Welcome!</span>
+        <button id="logoutBtn" class="logout-btn">Logout</button>
+      </div>
+    </nav>
+
+    <main class="dashboard-main">
+      <div class="dashboard-header">
+        <h1>Your Game Projects</h1>
+        <button id="createProjectBtn" class="create-btn">+ New Project</button>
+      </div>
+
+      <div class="dashboard-content">
+        <!-- Quick Stats -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <h3>Active Projects</h3>
+            <span class="stat-number" id="activeProjects">0</span>
+          </div>
+          <div class="stat-card">
+            <h3>Pending Tasks</h3>
+            <span class="stat-number" id="pendingTasks">0</span>
+          </div>
+          <div class="stat-card">
+            <h3>Completed Tasks</h3>
+            <span class="stat-number" id="completedTasks">0</span>
+          </div>
+        </div>
+
+        <!-- Projects Section -->
+        <div class="projects-section">
+          <h2>Recent Projects</h2>
+          <div id="projectsList" class="projects-grid">
+            <!-- Projects will be loaded here -->
+            <div class="empty-state">
+              <div class="empty-icon">📋</div>
+              <h3>No projects yet</h3>
+              <p>
+                Create your first game project to start collaborating with your
+                team!
+              </p>
+              <button class="create-btn">Create Project</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script src="js/dashboard.js"></script>
+  </body>
+</html>
