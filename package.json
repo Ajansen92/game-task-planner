@@ -4,6 +4,7 @@
   "description": "A collaborative platform for coordinating game tasks",
   "main": "server/app.js",
   "scripts": {
+    "serve": "npx http-server public -p 8000 -o",
     "start": "node server/app.js",
     "dev": "nodemon server/app.js",
     "test": "jest",

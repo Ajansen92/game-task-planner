@@ -3,19 +3,7 @@ console.log('🎮 Game Task Planner loaded successfully!')
 
 // Wait for the DOM to be fully loaded
 document.addEventListener('DOMContentLoaded', function () {
-  // Get the CTA button
-  const ctaButton = document.querySelector('.cta-button')
-
-  // Add click event to the CTA button
-  if (ctaButton) {
-    ctaButton.addEventListener('click', function () {
-      alert(
-        'Welcome to Game Task Planner! 🎮\n\nSign up and login features coming soon!'
-      )
-    })
-  }
-
-  // Add some interactive effects to feature cards
+  // Add some interactive effects to feature cards only
   const featureCards = document.querySelectorAll('.feature')
 
   featureCards.forEach((card) => {
@@ -28,12 +16,12 @@ document.addEventListener('DOMContentLoaded', function () {
     })
   })
 
-  // Simple function to show we're ready for future features
+  // Project status object
   window.gameTaskPlanner = {
     version: '1.0.0',
     status: 'Development',
     features: {
-      userAuth: 'Coming Soon',
+      userAuth: 'Active',
       projectManagement: 'Coming Soon',
       taskTracking: 'Coming Soon',
     },
