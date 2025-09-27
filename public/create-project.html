@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Create Project - Game Task Planner</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/dashboard.css" />
+    <link rel="stylesheet" href="css/create-project.css" />
+  </head>
+  <body>
+    <nav class="dashboard-nav">
+      <div class="nav-brand">
+        <h2>🎮 Game Task Planner</h2>
+      </div>
+      <div class="nav-user">
+        <a href="dashboard.html" class="back-link">← Back to Dashboard</a>
+        <span id="welcomeUser">Welcome!</span>
+        <button id="logoutBtn" class="logout-btn">Logout</button>
+      </div>
+    </nav>
+
+    <main class="create-project-main">
+      <div class="create-project-container">
+        <div class="form-header">
+          <h1>Create New Project</h1>
+          <p>Set up a new gaming project for you and your team</p>
+        </div>
+
+        <form id="createProjectForm" class="project-form">
+          <div class="form-section">
+            <h2>Basic Information</h2>
+
+            <div class="input-group">
+              <label for="projectTitle">Project Title *</label>
+              <input
+                type="text"
+                id="projectTitle"
+                placeholder="e.g., Epic Castle Build"
+                required
+              />
+            </div>
+
+            <div class="input-group">
+              <label for="projectGame">Game *</label>
+              <select id="projectGame" required>
+                <option value="">Select a game</option>
+                <option value="minecraft">Minecraft</option>
+                <option value="terraria">Terraria</option>
+                <option value="valheim">Valheim</option>
+                <option value="stardew-valley">Stardew Valley</option>
+                <option value="animal-crossing">Animal Crossing</option>
+                <option value="rust">Rust</option>
+                <option value="ark">ARK: Survival Evolved</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+
+            <div class="input-group" id="customGameGroup" style="display: none">
+              <label for="customGame">Custom Game Name</label>
+              <input
+                type="text"
+                id="customGame"
+                placeholder="Enter game name"
+              />
+            </div>
+
+            <div class="input-group">
+              <label for="projectDescription">Description *</label>
+              <textarea
+                id="projectDescription"
+                rows="4"
+                placeholder="Describe your project goals and what you want to build..."
+                required
+              ></textarea>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h2>Project Details</h2>
+
+            <div class="input-group">
+              <label for="projectCategory">Project Type</label>
+              <select id="projectCategory">
+                <option value="building">Building/Construction</option>
+                <option value="farming">Farming/Resource Gathering</option>
+                <option value="exploration">Exploration</option>
+                <option value="pvp">PvP/Combat</option>
+                <option value="creative">Creative/Art</option>
+                <option value="technical">Technical/Redstone</option>
+                <option value="community">Community Event</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+
+            <div class="input-group">
+              <label for="projectPriority">Priority Level</label>
+              <select id="projectPriority">
+                <option value="low">Low - When we have time</option>
+                <option value="medium" selected>
+                  Medium - Regular progress
+                </option>
+                <option value="high">High - Focus project</option>
+                <option value="urgent">
+                  Urgent - Needs immediate attention
+                </option>
+              </select>
+            </div>
+
+            <div class="input-group">
+              <label for="estimatedDuration">Estimated Duration</label>
+              <select id="estimatedDuration">
+                <option value="1-day">1 Day</option>
+                <option value="few-days">Few Days</option>
+                <option value="1-week">1 Week</option>
+                <option value="few-weeks">Few Weeks</option>
+                <option value="1-month" selected>1 Month</option>
+                <option value="few-months">Few Months</option>
+                <option value="ongoing">Ongoing</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h2>Initial Tasks (Optional)</h2>
+            <p class="section-description">
+              Add some starting tasks to get your project organized
+            </p>
+
+            <div id="tasksContainer">
+              <div class="task-input-group">
+                <input
+                  type="text"
+                  placeholder="e.g., Gather materials"
+                  class="task-input"
+                />
+                <button
+                  type="button"
+                  class="remove-task-btn"
+                  style="display: none"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+
+            <button type="button" id="addTaskBtn" class="add-task-btn">
+              + Add Another Task
+            </button>
+          </div>
+
+          <div class="form-actions">
+            <button
+              type="button"
+              class="cancel-btn"
+              onclick="window.location.href='dashboard.html'"
+            >
+              Cancel
+            </button>
+            <button type="submit" class="submit-btn">Create Project</button>
+          </div>
+        </form>
+      </div>
+    </main>
+
+    <script src="js/create-project.js"></script>
+  </body>
+</html>

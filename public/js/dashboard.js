@@ -47,17 +47,23 @@ document.addEventListener('DOMContentLoaded', function () {
 
   async function loadDashboardData() {
     try {
-      // For now, we'll use mock data since we haven't built the projects backend yet
-      // TODO: Replace with real API calls when we build the projects system
+      // Load projects from localStorage (temporary until we build backend)
+      const userProjects = JSON.parse(
+        localStorage.getItem('userProjects') || '[]'
+      )
 
-      updateStats({
-        activeProjects: 0,
-        pendingTasks: 0,
-        completedTasks: 0,
-      })
+      // Calculate stats
+      const stats = {
+        activeProjects: userProjects.length,
+        pendingTasks: userProjects.reduce(
+          (total, project) => total + (project.taskCount || 0),
+          0
+        ),
+        completedTasks: 0, // We'll add this when we build task completion
+      }
 
-      // Load projects (empty for now)
-      loadProjects([])
+      updateStats(stats)
+      loadProjects(userProjects)
     } catch (error) {
       console.error('Error loading dashboard data:', error)
       showNotification('Error loading dashboard data', 'error')
@@ -113,40 +119,15 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function createProject() {
-    // TODO: Open create project modal or navigate to create project page
-    console.log('Create new project clicked')
-    showNotification('Project creation coming soon! 🚧', 'info')
-
-    // For now, let's simulate creating a project
-    setTimeout(() => {
-      const mockProject = {
-        id: Date.now(),
-        title: 'Sample Minecraft Castle',
-        game: 'Minecraft',
-        description: 'Building a massive medieval castle with the team',
-        taskCount: 5,
-        memberCount: 3,
-        updatedAt: new Date(),
-      }
-
-      // Add to projects list (this will be replaced with real data later)
-      const currentStats = {
-        activeProjects: 1,
-        pendingTasks: 5,
-        completedTasks: 0,
-      }
-
-      updateStats(currentStats)
-      loadProjects([mockProject])
-
-      showNotification('Sample project created! (Demo only)', 'success')
-    }, 1000)
+    // Navigate to create project page
+    window.location.href = 'create-project.html'
   }
 
   function logout() {
     // Clear stored data
     localStorage.removeItem('token')
     localStorage.removeItem('user')
+    localStorage.removeItem('userProjects') // Clear projects too
 
     // Show confirmation
     showNotification('Logged out successfully', 'success')
