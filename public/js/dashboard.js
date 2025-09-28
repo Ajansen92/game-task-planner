@@ -52,18 +52,33 @@ document.addEventListener('DOMContentLoaded', function () {
         localStorage.getItem('userProjects') || '[]'
       )
 
-      // Calculate stats
+      // Load all tasks to calculate stats
+      const allTasks = JSON.parse(localStorage.getItem('projectTasks') || '{}')
+
+      // Calculate comprehensive stats
+      let totalTasks = 0
+      let completedTasks = 0
+      let inProgressTasks = 0
+
+      userProjects.forEach((project) => {
+        const projectTasks = allTasks[project.id] || []
+        totalTasks += projectTasks.length
+        completedTasks += projectTasks.filter(
+          (t) => t.status === 'completed'
+        ).length
+        inProgressTasks += projectTasks.filter(
+          (t) => t.status === 'in-progress'
+        ).length
+      })
+
       const stats = {
         activeProjects: userProjects.length,
-        pendingTasks: userProjects.reduce(
-          (total, project) => total + (project.taskCount || 0),
-          0
-        ),
-        completedTasks: 0, // We'll add this when we build task completion
+        pendingTasks: totalTasks - completedTasks,
+        completedTasks: completedTasks,
       }
 
       updateStats(stats)
-      loadProjects(userProjects)
+      loadProjects(userProjects, allTasks)
     } catch (error) {
       console.error('Error loading dashboard data:', error)
       showNotification('Error loading dashboard data', 'error')
@@ -76,7 +91,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('completedTasks').textContent = stats.completedTasks
   }
 
-  function loadProjects(projects) {
+  function loadProjects(projects, allTasks = {}) {
     const projectsList = document.getElementById('projectsList')
 
     if (projects.length === 0) {
@@ -88,7 +103,16 @@ document.addEventListener('DOMContentLoaded', function () {
     projectsList.innerHTML = ''
 
     projects.forEach((project) => {
-      const projectCard = createProjectCard(project)
+      // Calculate actual task count from stored tasks
+      const projectTasks = allTasks[project.id] || []
+      const updatedProject = {
+        ...project,
+        taskCount: projectTasks.length,
+        completedTasks: projectTasks.filter((t) => t.status === 'completed')
+          .length,
+      }
+
+      const projectCard = createProjectCard(updatedProject)
       projectsList.appendChild(projectCard)
     })
   }
@@ -96,23 +120,36 @@ document.addEventListener('DOMContentLoaded', function () {
   function createProjectCard(project) {
     const card = document.createElement('div')
     card.className = 'project-card'
+
+    // Calculate completion percentage
+    const completionPercent =
+      project.taskCount > 0
+        ? Math.round((project.completedTasks / project.taskCount) * 100)
+        : 0
+
     card.innerHTML = `
             <div class="project-header">
                 <h3 class="project-title">${project.title}</h3>
                 <span class="project-game">${project.game}</span>
             </div>
             <p class="project-description">${project.description}</p>
+            <div class="project-progress">
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${completionPercent}%"></div>
+                </div>
+                <span class="progress-text">${completionPercent}% Complete</span>
+            </div>
             <div class="project-stats">
                 <span>Tasks: ${project.taskCount || 0}</span>
+                <span>Completed: ${project.completedTasks || 0}</span>
                 <span>Members: ${project.memberCount || 1}</span>
                 <span>Updated: ${formatDate(project.updatedAt)}</span>
             </div>
         `
 
     card.addEventListener('click', () => {
-      // TODO: Navigate to project details page
-      console.log('Open project:', project.id)
-      showNotification('Project details page coming soon!', 'info')
+      // Navigate to project details page
+      window.location.href = `project-details.html?id=${project.id}`
     })
 
     return card
@@ -128,6 +165,7 @@ document.addEventListener('DOMContentLoaded', function () {
     localStorage.removeItem('token')
     localStorage.removeItem('user')
     localStorage.removeItem('userProjects') // Clear projects too
+    localStorage.removeItem('projectTasks') // Clear tasks too
 
     // Show confirmation
     showNotification('Logged out successfully', 'success')
