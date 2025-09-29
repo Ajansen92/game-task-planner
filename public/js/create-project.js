@@ -127,8 +127,8 @@ document.addEventListener('DOMContentLoaded', function () {
     setLoadingState(true)
 
     try {
-      // For now, we'll simulate API call (we'll build the backend later)
-      await simulateProjectCreation(formData)
+      // Call real API to create project
+      await createProjectAPI(formData)
 
       // Show success message
       showFormMessage(
@@ -142,7 +142,10 @@ document.addEventListener('DOMContentLoaded', function () {
       }, 2000)
     } catch (error) {
       console.error('Error creating project:', error)
-      showFormMessage('Error creating project. Please try again.', 'error')
+      showFormMessage(
+        error.message || 'Error creating project. Please try again.',
+        'error'
+      )
     } finally {
       setLoadingState(false)
     }
@@ -166,8 +169,6 @@ document.addEventListener('DOMContentLoaded', function () {
       priority: document.getElementById('projectPriority').value,
       estimatedDuration: document.getElementById('estimatedDuration').value,
       tasks: tasks,
-      createdBy: user.id,
-      createdAt: new Date().toISOString(),
     }
   }
 
@@ -202,38 +203,27 @@ document.addEventListener('DOMContentLoaded', function () {
     return true
   }
 
-  async function simulateProjectCreation(formData) {
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 1500))
+  async function createProjectAPI(formData) {
+    const token = localStorage.getItem('token')
 
-    // Store project in localStorage for now (until we build backend)
-    const existingProjects = JSON.parse(
-      localStorage.getItem('userProjects') || '[]'
-    )
+    const response = await fetch('/api/projects', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(formData),
+    })
 
-    const newProject = {
-      id: Date.now().toString(),
-      ...formData,
-      status: 'active',
-      taskCount: formData.tasks.length,
-      memberCount: 1,
-      updatedAt: new Date().toISOString(),
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.message || 'Failed to create project')
     }
 
-    existingProjects.push(newProject)
-    localStorage.setItem('userProjects', JSON.stringify(existingProjects))
+    const data = await response.json()
+    console.log('✅ Project created:', data.project)
 
-    console.log('✅ Project created:', newProject)
-
-    // TODO: Replace with real API call
-    // const response = await fetch('/api/projects', {
-    //     method: 'POST',
-    //     headers: {
-    //         'Content-Type': 'application/json',
-    //         'Authorization': `Bearer ${token}`
-    //     },
-    //     body: JSON.stringify(formData)
-    // });
+    return data
   }
 
   function setLoadingState(isLoading) {

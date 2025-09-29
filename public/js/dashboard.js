@@ -47,28 +47,28 @@ document.addEventListener('DOMContentLoaded', function () {
 
   async function loadDashboardData() {
     try {
-      // Load projects from localStorage (temporary until we build backend)
-      const userProjects = JSON.parse(
-        localStorage.getItem('userProjects') || '[]'
-      )
+      const token = localStorage.getItem('token')
 
-      // Load all tasks to calculate stats
-      const allTasks = JSON.parse(localStorage.getItem('projectTasks') || '{}')
+      // Load projects from API
+      const response = await fetch('/api/projects', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to load projects')
+      }
+
+      const userProjects = await response.json()
 
       // Calculate comprehensive stats
       let totalTasks = 0
       let completedTasks = 0
-      let inProgressTasks = 0
 
       userProjects.forEach((project) => {
-        const projectTasks = allTasks[project.id] || []
-        totalTasks += projectTasks.length
-        completedTasks += projectTasks.filter(
-          (t) => t.status === 'completed'
-        ).length
-        inProgressTasks += projectTasks.filter(
-          (t) => t.status === 'in-progress'
-        ).length
+        totalTasks += project.taskCount || 0
+        completedTasks += project.completedTasks || 0
       })
 
       const stats = {
@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }
 
       updateStats(stats)
-      loadProjects(userProjects, allTasks)
+      loadProjects(userProjects)
     } catch (error) {
       console.error('Error loading dashboard data:', error)
       showNotification('Error loading dashboard data', 'error')
@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('completedTasks').textContent = stats.completedTasks
   }
 
-  function loadProjects(projects, allTasks = {}) {
+  function loadProjects(projects) {
     const projectsList = document.getElementById('projectsList')
 
     if (projects.length === 0) {
@@ -103,16 +103,7 @@ document.addEventListener('DOMContentLoaded', function () {
     projectsList.innerHTML = ''
 
     projects.forEach((project) => {
-      // Calculate actual task count from stored tasks
-      const projectTasks = allTasks[project.id] || []
-      const updatedProject = {
-        ...project,
-        taskCount: projectTasks.length,
-        completedTasks: projectTasks.filter((t) => t.status === 'completed')
-          .length,
-      }
-
-      const projectCard = createProjectCard(updatedProject)
+      const projectCard = createProjectCard(project)
       projectsList.appendChild(projectCard)
     })
   }
@@ -121,11 +112,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const card = document.createElement('div')
     card.className = 'project-card'
 
-    // Calculate completion percentage
+    // Calculate completion percentage from API data
+    const taskCount = project.taskCount || 0
+    const completedCount = project.completedTasks || 0
     const completionPercent =
-      project.taskCount > 0
-        ? Math.round((project.completedTasks / project.taskCount) * 100)
-        : 0
+      taskCount > 0 ? Math.round((completedCount / taskCount) * 100) : 0
 
     card.innerHTML = `
             <div class="project-header">
@@ -140,16 +131,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 <span class="progress-text">${completionPercent}% Complete</span>
             </div>
             <div class="project-stats">
-                <span>Tasks: ${project.taskCount || 0}</span>
-                <span>Completed: ${project.completedTasks || 0}</span>
-                <span>Members: ${project.memberCount || 1}</span>
+                <span>Tasks: ${taskCount}</span>
+                <span>Completed: ${completedCount}</span>
+                <span>Members: ${project.members?.length || 1}</span>
                 <span>Updated: ${formatDate(project.updatedAt)}</span>
             </div>
         `
 
     card.addEventListener('click', () => {
-      // Navigate to project details page
-      window.location.href = `project-details.html?id=${project.id}`
+      // Navigate to project details page - use _id from MongoDB
+      window.location.href = `project-details.html?id=${project._id}`
     })
 
     return card
@@ -164,8 +155,6 @@ document.addEventListener('DOMContentLoaded', function () {
     // Clear stored data
     localStorage.removeItem('token')
     localStorage.removeItem('user')
-    localStorage.removeItem('userProjects') // Clear projects too
-    localStorage.removeItem('projectTasks') // Clear tasks too
 
     // Show confirmation
     showNotification('Logged out successfully', 'success')
