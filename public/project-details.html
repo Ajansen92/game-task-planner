@@ -93,6 +93,36 @@
         </div>
       </div>
 
+      <!-- Team Section -->
+      <div class="project-section">
+        <div class="section-header">
+          <h2>Team Members</h2>
+          <button
+            id="inviteMemberBtn"
+            class="action-btn primary"
+            style="display: none"
+          >
+            + Invite Member
+          </button>
+        </div>
+
+        <div class="team-members-grid" id="teamMembersGrid">
+          <!-- Team members will be loaded here -->
+          <div class="loading-state">Loading team members...</div>
+        </div>
+
+        <!-- Pending Invitations -->
+        <div
+          id="pendingInvitationsSection"
+          style="display: none; margin-top: 2rem"
+        >
+          <h3 style="color: #718096; font-size: 1rem; margin-bottom: 1rem">
+            Pending Invitations
+          </h3>
+          <div id="pendingInvitationsList"></div>
+        </div>
+      </div>
+
       <!-- Tasks Section -->
       <div class="project-section">
         <div class="section-header">
@@ -173,7 +203,6 @@
             <label for="taskAssignee">Assigned To</label>
             <select id="taskAssignee">
               <option value="">Unassigned</option>
-              <option value="me">Me</option>
               <!-- Team members will be added dynamically -->
             </select>
           </div>
@@ -205,6 +234,36 @@
             Delete
           </button>
         </div>
+      </div>
+    </div>
+
+    <!-- Invite Member Modal -->
+    <div id="inviteMemberModal" class="modal" style="display: none">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Invite Team Member</h3>
+          <button class="modal-close">&times;</button>
+        </div>
+        <form id="inviteMemberForm" class="modal-form">
+          <div class="input-group">
+            <label for="inviteEmail">Email Address</label>
+            <input
+              type="email"
+              id="inviteEmail"
+              placeholder="teammate@example.com"
+              required
+            />
+            <small style="color: #718096; margin-top: 0.5rem; display: block">
+              Enter the email address of the person you want to invite to this
+              project.
+            </small>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="cancel-btn">Cancel</button>
+            <button type="submit" class="submit-btn">Send Invitation</button>
+          </div>
+        </form>
       </div>
     </div>
 

@@ -2,7 +2,7 @@
 const express = require('express')
 const jwt = require('jsonwebtoken')
 const router = express.Router()
-const User = require('../models/User')
+const User = require('../models/user')
 
 // Register route
 router.post('/register', async (req, res) => {
@@ -56,7 +56,8 @@ router.post('/register', async (req, res) => {
       message: 'User created successfully',
       token,
       user: {
-        id: newUser._id,
+        id: newUser._id.toString(),
+        _id: newUser._id.toString(),
         username: newUser.username,
         email: newUser.email,
       },
@@ -104,7 +105,8 @@ router.post('/login', async (req, res) => {
       message: 'Login successful',
       token,
       user: {
-        id: user._id,
+        id: user._id.toString(),
+        _id: user._id.toString(),
         username: user.username,
         email: user.email,
       },
@@ -126,7 +128,8 @@ router.get('/me', authenticateToken, async (req, res) => {
 
     res.json({
       user: {
-        id: user._id,
+        id: user._id.toString(),
+        _id: user._id.toString(),
         username: user.username,
         email: user.email,
         createdAt: user.createdAt,

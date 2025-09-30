@@ -2,17 +2,19 @@
 const express = require('express')
 const router = express.Router()
 const Project = require('../models/project')
-const Task = require('../models/Task')
+const Task = require('../models/task')
 
 // Middleware to authenticate token
 const authenticateToken = require('../middleware/auth')
 
-// Get all projects for logged-in user
+// Get all projects for logged-in user (includes projects where they're a member)
 router.get('/', authenticateToken, async (req, res) => {
   try {
-    const projects = await Project.find({ createdBy: req.userId }).sort({
-      updatedAt: -1,
+    const projects = await Project.find({
+      'members.user': req.userId,
     })
+      .populate('members.user', 'username email')
+      .sort({ updatedAt: -1 })
 
     // Get task counts for each project
     const projectsWithCounts = await Promise.all(
@@ -27,6 +29,7 @@ router.get('/', authenticateToken, async (req, res) => {
           ...project.toObject(),
           taskCount: totalTasks,
           completedTasks: completedTasks,
+          userRole: project.getUserRole(req.userId),
         }
       })
     )
@@ -41,16 +44,42 @@ router.get('/', authenticateToken, async (req, res) => {
 // Get single project by ID
 router.get('/:id', authenticateToken, async (req, res) => {
   try {
-    const project = await Project.findOne({
-      _id: req.params.id,
-      createdBy: req.userId,
-    })
+    const project = await Project.findById(req.params.id).populate(
+      'members.user',
+      'username email'
+    )
 
     if (!project) {
       return res.status(404).json({ message: 'Project not found' })
     }
 
-    res.json(project)
+    // DEBUG: Log to see what's happening
+    console.log('🔍 DEBUG - Request userId:', req.userId)
+    console.log('🔍 DEBUG - Request userId type:', typeof req.userId)
+    console.log(
+      '🔍 DEBUG - Project members:',
+      project.members.map((m) => ({
+        userId: m.user._id,
+        userIdType: typeof m.user._id,
+        userIdString: m.user._id.toString(),
+        role: m.role,
+      }))
+    )
+    console.log('🔍 DEBUG - Has access?', project.hasAccess(req.userId))
+
+    // Check if user has access
+    if (!project.hasAccess(req.userId)) {
+      console.log('❌ Access denied for user:', req.userId)
+      return res.status(403).json({ message: 'Access denied' })
+    }
+
+    // Add user's role to response
+    const projectData = {
+      ...project.toObject(),
+      userRole: project.getUserRole(req.userId),
+    }
+
+    res.json(projectData)
   } catch (error) {
     console.error('❌ Get project error:', error)
     res.status(500).json({ message: 'Server error' })
@@ -69,6 +98,10 @@ router.post('/', authenticateToken, async (req, res) => {
         .status(400)
         .json({ message: 'Title, description, and game are required' })
     }
+
+    // DEBUG: Log user ID
+    console.log('🔍 Creating project for user:', req.userId)
+    console.log('🔍 User ID type:', typeof req.userId)
 
     // Create project
     const newProject = new Project({
@@ -89,6 +122,8 @@ router.post('/', authenticateToken, async (req, res) => {
     })
 
     await newProject.save()
+
+    console.log('✅ Project created with members:', newProject.members)
 
     // If initial tasks are provided, create them
     if (req.body.tasks && Array.isArray(req.body.tasks)) {
@@ -131,13 +166,17 @@ router.put('/:id', authenticateToken, async (req, res) => {
       status,
     } = req.body
 
-    const project = await Project.findOne({
-      _id: req.params.id,
-      createdBy: req.userId,
-    })
+    const project = await Project.findById(req.params.id)
 
     if (!project) {
       return res.status(404).json({ message: 'Project not found' })
+    }
+
+    // Check if user is owner or admin
+    if (!project.isOwnerOrAdmin(req.userId)) {
+      return res
+        .status(403)
+        .json({ message: 'Only owners and admins can edit the project' })
     }
 
     // Update fields
@@ -166,13 +205,18 @@ router.put('/:id', authenticateToken, async (req, res) => {
 // Delete project
 router.delete('/:id', authenticateToken, async (req, res) => {
   try {
-    const project = await Project.findOne({
-      _id: req.params.id,
-      createdBy: req.userId,
-    })
+    const project = await Project.findById(req.params.id)
 
     if (!project) {
       return res.status(404).json({ message: 'Project not found' })
+    }
+
+    // Only owner can delete project
+    const userRole = project.getUserRole(req.userId)
+    if (userRole !== 'owner') {
+      return res
+        .status(403)
+        .json({ message: 'Only the project owner can delete the project' })
     }
 
     // Delete all tasks associated with this project

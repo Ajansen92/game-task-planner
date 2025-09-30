@@ -5,6 +5,7 @@ let currentProject = null
 let currentTasks = []
 let currentFilter = 'all'
 let editingTaskId = null
+let teamMembers = []
 
 document.addEventListener('DOMContentLoaded', function () {
   // Check authentication
@@ -66,6 +67,12 @@ document.addEventListener('DOMContentLoaded', function () {
       editProjectBtn.addEventListener('click', editProject)
     }
 
+    // Invite member button
+    const inviteMemberBtn = document.getElementById('inviteMemberBtn')
+    if (inviteMemberBtn) {
+      inviteMemberBtn.addEventListener('click', openInviteMemberModal)
+    }
+
     // Filter buttons
     document.querySelectorAll('.filter-btn').forEach((btn) => {
       btn.addEventListener('click', (e) => {
@@ -83,8 +90,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const taskModal = document.getElementById('taskModal')
     const deleteModal = document.getElementById('deleteModal')
+    const inviteMemberModal = document.getElementById('inviteMemberModal')
 
-    if (!taskModal || !deleteModal) {
+    if (!taskModal || !deleteModal || !inviteMemberModal) {
       console.error('Modals not found in DOM')
       return
     }
@@ -99,18 +107,13 @@ document.addEventListener('DOMContentLoaded', function () {
     })
 
     // Click outside modal to close
-    taskModal.addEventListener('click', (e) => {
-      if (e.target === taskModal) {
-        console.log('Clicked outside task modal')
-        closeModals()
-      }
-    })
-
-    deleteModal.addEventListener('click', (e) => {
-      if (e.target === deleteModal) {
-        console.log('Clicked outside delete modal')
-        closeModals()
-      }
+    ;[taskModal, deleteModal, inviteMemberModal].forEach((modal) => {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          console.log('Clicked outside modal')
+          closeModals()
+        }
+      })
     })
 
     // Task form submission
@@ -129,6 +132,15 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log('Confirm delete clicked')
         e.preventDefault()
         confirmDeleteTask()
+      })
+    }
+
+    // Invite member form submission
+    const inviteMemberForm = document.getElementById('inviteMemberForm')
+    if (inviteMemberForm) {
+      inviteMemberForm.addEventListener('submit', (e) => {
+        console.log('Invite form submitted')
+        handleInviteMemberSubmission(e)
       })
     }
   }
@@ -155,6 +167,7 @@ document.addEventListener('DOMContentLoaded', function () {
       currentProject = project
 
       await loadTasks(projectId)
+      await loadTeamMembers(projectId)
       displayProjectInfo(project)
     } catch (error) {
       console.error('Error loading project:', error)
@@ -193,6 +206,44 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
+  async function loadTeamMembers(projectId) {
+    try {
+      console.log('Loading team members from API')
+      const token = localStorage.getItem('token')
+
+      const response = await fetch(`/api/team/project/${projectId}/members`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to load team members')
+      }
+
+      const data = await response.json()
+      console.log('Team data loaded:', data)
+
+      teamMembers = data.members
+      displayTeamMembers(data.members, data.invitations)
+      updateTeamCount(data.members.length)
+
+      // Show invite button if user is owner or admin
+      if (
+        currentProject.userRole === 'owner' ||
+        currentProject.userRole === 'admin'
+      ) {
+        document.getElementById('inviteMemberBtn').style.display = 'block'
+      }
+
+      // Update task assignee dropdown with team members
+      updateAssigneeDropdown()
+    } catch (error) {
+      console.error('Error loading team members:', error)
+      showNotification('Error loading team members', 'error')
+    }
+  }
+
   function displayProjectInfo(project) {
     console.log('Displaying project info:', project)
 
@@ -214,6 +265,120 @@ document.addEventListener('DOMContentLoaded', function () {
     )
 
     document.title = `${project.title} - Game Task Planner`
+  }
+
+  function displayTeamMembers(members, invitations) {
+    const container = document.getElementById('teamMembersGrid')
+    const currentUserId = JSON.parse(localStorage.getItem('user')).id
+
+    if (!members || members.length === 0) {
+      container.innerHTML =
+        '<div class="loading-state">No team members found</div>'
+      return
+    }
+
+    container.innerHTML = members
+      .map((member) => {
+        const isCurrentUser = member.user._id === currentUserId
+        const canManage =
+          currentProject.userRole === 'owner' ||
+          (currentProject.userRole === 'admin' && member.role !== 'owner')
+
+        const initials = member.user.username.substring(0, 2).toUpperCase()
+
+        return `
+                <div class="team-member-card">
+                    <div class="member-header">
+                        <div class="member-avatar">${initials}</div>
+                        <div class="member-info">
+                            <h4 class="member-name">${member.user.username} ${
+          isCurrentUser ? '(You)' : ''
+        }</h4>
+                            <p class="member-email">${member.user.email}</p>
+                        </div>
+                    </div>
+                    <div class="member-footer">
+                        <span class="member-role-badge role-${
+                          member.role
+                        }">${member.role.toUpperCase()}</span>
+                        <div class="member-actions">
+                            ${
+                              canManage && !isCurrentUser
+                                ? `
+                                <button class="member-action-btn danger" onclick="window.removeMember('${member._id}')">
+                                    Remove
+                                </button>
+                            `
+                                : ''
+                            }
+                        </div>
+                    </div>
+                    <p class="member-joined">Joined ${formatDate(
+                      member.joinedAt
+                    )}</p>
+                </div>
+            `
+      })
+      .join('')
+
+    // Display pending invitations if user is owner/admin
+    if (
+      (currentProject.userRole === 'owner' ||
+        currentProject.userRole === 'admin') &&
+      invitations &&
+      invitations.length > 0
+    ) {
+      const pendingInvites = invitations.filter(
+        (inv) => inv.status === 'pending'
+      )
+
+      if (pendingInvites.length > 0) {
+        document.getElementById('pendingInvitationsSection').style.display =
+          'block'
+        document.getElementById('pendingInvitationsList').innerHTML =
+          pendingInvites
+            .map(
+              (inv) => `
+                    <div class="invitation-card">
+                        <div class="invitation-info">
+                            <div class="invitation-email">${inv.email}</div>
+                            <div class="invitation-date">Invited ${formatDate(
+                              inv.invitedAt
+                            )}</div>
+                        </div>
+                        <div class="invitation-actions">
+                            <button class="invitation-cancel-btn" onclick="window.cancelInvitation('${
+                              inv._id
+                            }')">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                `
+            )
+            .join('')
+      }
+    }
+  }
+
+  function updateTeamCount(count) {
+    document.getElementById('teamMembers').textContent = count
+  }
+
+  function updateAssigneeDropdown() {
+    const assigneeSelect = document.getElementById('taskAssignee')
+    if (!assigneeSelect) return
+
+    // Clear existing options except "Unassigned"
+    assigneeSelect.innerHTML = '<option value="">Unassigned</option>'
+
+    // Add team members as options
+    teamMembers.forEach((member) => {
+      const option = document.createElement('option')
+      option.value = member.user._id
+      option.textContent = member.user.username
+      assigneeSelect.appendChild(option)
+    })
   }
 
   function displayTasks() {
@@ -454,14 +619,34 @@ document.addEventListener('DOMContentLoaded', function () {
     modal.style.display = 'flex'
   }
 
+  function openInviteMemberModal() {
+    console.log('Opening invite member modal')
+    const modal = document.getElementById('inviteMemberModal')
+    const form = document.getElementById('inviteMemberForm')
+
+    if (!modal || !form) {
+      console.error('Invite modal or form not found')
+      return
+    }
+
+    form.reset()
+    modal.style.display = 'flex'
+
+    setTimeout(() => {
+      document.getElementById('inviteEmail').focus()
+    }, 100)
+  }
+
   function closeModals() {
     console.log('Closing modals')
 
     const taskModal = document.getElementById('taskModal')
     const deleteModal = document.getElementById('deleteModal')
+    const inviteMemberModal = document.getElementById('inviteMemberModal')
 
     if (taskModal) taskModal.style.display = 'none'
     if (deleteModal) deleteModal.style.display = 'none'
+    if (inviteMemberModal) inviteMemberModal.style.display = 'none'
 
     editingTaskId = null
   }
@@ -531,6 +716,49 @@ document.addEventListener('DOMContentLoaded', function () {
     } catch (error) {
       console.error('Error saving task:', error)
       showNotification('Error saving task: ' + error.message, 'error')
+    }
+  }
+
+  async function handleInviteMemberSubmission(e) {
+    e.preventDefault()
+    console.log('Invite form submitted')
+
+    const email = document.getElementById('inviteEmail').value.trim()
+
+    if (!email) {
+      showNotification('Email is required', 'error')
+      return
+    }
+
+    try {
+      const token = localStorage.getItem('token')
+
+      const response = await fetch(
+        `/api/team/project/${currentProject._id}/invite`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ email }),
+        }
+      )
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to send invitation')
+      }
+
+      showNotification('Invitation sent successfully!', 'success')
+      closeModals()
+
+      // Reload team members to show the pending invitation
+      await loadTeamMembers(currentProject._id)
+    } catch (error) {
+      console.error('Error sending invitation:', error)
+      showNotification(error.message, 'error')
     }
   }
 
@@ -607,6 +835,48 @@ document.addEventListener('DOMContentLoaded', function () {
       console.error('Error deleting task:', error)
       showNotification('Error deleting task: ' + error.message, 'error')
     }
+  }
+
+  // Global functions for onclick handlers
+  window.removeMember = async function (memberId) {
+    if (!confirm('Are you sure you want to remove this team member?')) {
+      return
+    }
+
+    try {
+      const token = localStorage.getItem('token')
+
+      const response = await fetch(
+        `/api/team/project/${currentProject._id}/members/${memberId}`,
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.message || 'Failed to remove member')
+      }
+
+      showNotification('Team member removed successfully', 'success')
+      await loadTeamMembers(currentProject._id)
+    } catch (error) {
+      console.error('Error removing member:', error)
+      showNotification(error.message, 'error')
+    }
+  }
+
+  window.cancelInvitation = async function (invitationId) {
+    if (!confirm('Are you sure you want to cancel this invitation?')) {
+      return
+    }
+
+    console.log('Canceling invitation:', invitationId)
+    showNotification('Cancel invitation feature coming soon', 'info')
+    // TODO: Implement cancel invitation API endpoint
   }
 
   function editProject() {

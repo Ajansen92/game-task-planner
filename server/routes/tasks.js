@@ -11,13 +11,14 @@ const authenticateToken = require('../middleware/auth')
 router.get('/project/:projectId', authenticateToken, async (req, res) => {
   try {
     // Verify user has access to this project
-    const project = await Project.findOne({
-      _id: req.params.projectId,
-      createdBy: req.userId,
-    })
+    const project = await Project.findById(req.params.projectId)
 
     if (!project) {
       return res.status(404).json({ message: 'Project not found' })
+    }
+
+    if (!project.hasAccess(req.userId)) {
+      return res.status(403).json({ message: 'Access denied' })
     }
 
     const tasks = await Task.find({ project: req.params.projectId })
@@ -43,12 +44,9 @@ router.get('/:id', authenticateToken, async (req, res) => {
     }
 
     // Verify user has access to this task's project
-    const project = await Project.findOne({
-      _id: task.project._id,
-      createdBy: req.userId,
-    })
+    const project = await Project.findById(task.project._id)
 
-    if (!project) {
+    if (!project || !project.hasAccess(req.userId)) {
       return res.status(403).json({ message: 'Access denied' })
     }
 
@@ -70,13 +68,14 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 
     // Verify user has access to this project
-    const projectDoc = await Project.findOne({
-      _id: project,
-      createdBy: req.userId,
-    })
+    const projectDoc = await Project.findById(project)
 
     if (!projectDoc) {
       return res.status(404).json({ message: 'Project not found' })
+    }
+
+    if (!projectDoc.hasAccess(req.userId)) {
+      return res.status(403).json({ message: 'Access denied' })
     }
 
     // Create task
@@ -120,12 +119,9 @@ router.put('/:id', authenticateToken, async (req, res) => {
     }
 
     // Verify user has access to this task's project
-    const project = await Project.findOne({
-      _id: task.project,
-      createdBy: req.userId,
-    })
+    const project = await Project.findById(task.project)
 
-    if (!project) {
+    if (!project || !project.hasAccess(req.userId)) {
       return res.status(403).json({ message: 'Access denied' })
     }
 
@@ -164,12 +160,9 @@ router.delete('/:id', authenticateToken, async (req, res) => {
     }
 
     // Verify user has access to this task's project
-    const project = await Project.findOne({
-      _id: task.project,
-      createdBy: req.userId,
-    })
+    const project = await Project.findById(task.project)
 
-    if (!project) {
+    if (!project || !project.hasAccess(req.userId)) {
       return res.status(403).json({ message: 'Access denied' })
     }
 
