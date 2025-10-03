@@ -145,6 +145,35 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
+  function setupInviteToggle() {
+    const toggleBtns = document.querySelectorAll('.toggle-btn')
+    const usernameGroup = document.getElementById('usernameInviteGroup')
+    const emailGroup = document.getElementById('emailInviteGroup')
+
+    toggleBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        // Remove active from all buttons
+        toggleBtns.forEach((b) => b.classList.remove('active'))
+        // Add active to clicked button
+        btn.classList.add('active')
+
+        const type = btn.dataset.type
+
+        if (type === 'username') {
+          usernameGroup.style.display = 'block'
+          emailGroup.style.display = 'none'
+          document.getElementById('inviteEmail').required = false
+          document.getElementById('inviteUsername').required = false
+        } else {
+          usernameGroup.style.display = 'none'
+          emailGroup.style.display = 'block'
+          document.getElementById('inviteEmail').required = false
+          document.getElementById('inviteUsername').required = false
+        }
+      })
+    })
+  }
+
   async function loadProject(projectId) {
     try {
       console.log('Loading project from API:', projectId)
@@ -630,10 +659,21 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     form.reset()
+
+    // Reset toggle to username by default
+    document.querySelectorAll('.toggle-btn').forEach((btn) => {
+      btn.classList.toggle('active', btn.dataset.type === 'username')
+    })
+    document.getElementById('usernameInviteGroup').style.display = 'block'
+    document.getElementById('emailInviteGroup').style.display = 'none'
+
+    // Setup toggle listeners
+    setupInviteToggle()
+
     modal.style.display = 'flex'
 
     setTimeout(() => {
-      document.getElementById('inviteEmail').focus()
+      document.getElementById('inviteUsername').focus()
     }, 100)
   }
 
@@ -723,15 +763,25 @@ document.addEventListener('DOMContentLoaded', function () {
     e.preventDefault()
     console.log('Invite form submitted')
 
+    const username = document.getElementById('inviteUsername').value.trim()
     const email = document.getElementById('inviteEmail').value.trim()
 
-    if (!email) {
+    // Determine which field is active
+    const activeType = document.querySelector('.toggle-btn.active').dataset.type
+
+    if (activeType === 'username' && !username) {
+      showNotification('Username is required', 'error')
+      return
+    }
+
+    if (activeType === 'email' && !email) {
       showNotification('Email is required', 'error')
       return
     }
 
     try {
       const token = localStorage.getItem('token')
+      const payload = activeType === 'username' ? { username } : { email }
 
       const response = await fetch(
         `/api/team/project/${currentProject._id}/invite`,
@@ -741,7 +791,7 @@ document.addEventListener('DOMContentLoaded', function () {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ email }),
+          body: JSON.stringify(payload),
         }
       )
 
@@ -751,7 +801,7 @@ document.addEventListener('DOMContentLoaded', function () {
         throw new Error(data.message || 'Failed to send invitation')
       }
 
-      showNotification('Invitation sent successfully!', 'success')
+      showNotification(data.message, 'success')
       closeModals()
 
       // Reload team members to show the pending invitation

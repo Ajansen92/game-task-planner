@@ -4,11 +4,13 @@
   "description": "A collaborative platform for coordinating game tasks",
   "main": "server/app.js",
   "scripts": {
-    "serve": "npx http-server public -p 8000 -o",
-    "start": "node server/app.js",
-    "dev": "nodemon server/app.js",
-    "test": "jest",
-    "build": "webpack --mode production"
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "server": "node server/app.js",
+    "server-dev": "nodemon server/app.js",
+    "dev": "concurrently \"npm start\" \"npm run server-dev\""
   },
   "repository": {
     "type": "git",
@@ -24,18 +26,39 @@
   "author": "Your Name",
   "license": "MIT",
   "dependencies": {
+    "axios": "^1.12.2",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2",
+    "lucide-react": "^0.263.1",
     "mongoose": "^8.18.3",
-    "multer": "^1.4.4"
+    "multer": "^1.4.4",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-scripts": "^5.0.1"
   },
   "devDependencies": {
+    "concurrently": "^8.2.0",
     "jest": "^29.7.0",
-    "nodemon": "^3.1.0",
-    "webpack": "^5.90.0",
-    "webpack-cli": "^5.1.4"
+    "nodemon": "^3.1.0"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
   }
 }

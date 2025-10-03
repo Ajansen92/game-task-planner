@@ -1,7 +1,7 @@
 // Task routes
 const express = require('express')
 const router = express.Router()
-const Task = require('../models/Task')
+const Task = require('../models/task')
 const Project = require('../models/project')
 
 // Middleware to authenticate token
@@ -21,9 +21,9 @@ router.get('/project/:projectId', authenticateToken, async (req, res) => {
       return res.status(403).json({ message: 'Access denied' })
     }
 
-    const tasks = await Task.find({ project: req.params.projectId })
-      .populate('assignee', 'username email')
-      .sort({ createdAt: -1 })
+    const tasks = await Task.find({ project: req.params.projectId }).sort({
+      createdAt: -1,
+    })
 
     res.json(tasks)
   } catch (error) {
@@ -35,9 +35,7 @@ router.get('/project/:projectId', authenticateToken, async (req, res) => {
 // Get single task
 router.get('/:id', authenticateToken, async (req, res) => {
   try {
-    const task = await Task.findById(req.params.id)
-      .populate('assignee', 'username email')
-      .populate('project', 'title')
+    const task = await Task.findById(req.params.id).populate('project', 'title')
 
     if (!task) {
       return res.status(404).json({ message: 'Task not found' })
@@ -60,7 +58,8 @@ router.get('/:id', authenticateToken, async (req, res) => {
 // Create new task
 router.post('/', authenticateToken, async (req, res) => {
   try {
-    const { title, description, project, priority, status, assignee } = req.body
+    const { title, description, project, priority, status, assignedTo } =
+      req.body
 
     // Validation
     if (!title || !project) {
@@ -84,8 +83,8 @@ router.post('/', authenticateToken, async (req, res) => {
       description: description || '',
       project,
       priority: priority || 'medium',
-      status: status || 'pending',
-      assignee: assignee || null,
+      status: status || 'todo',
+      assignedTo: assignedTo || 'Unassigned',
       createdBy: req.userId,
     })
 
@@ -110,7 +109,7 @@ router.post('/', authenticateToken, async (req, res) => {
 // Update task
 router.put('/:id', authenticateToken, async (req, res) => {
   try {
-    const { title, description, priority, status, assignee } = req.body
+    const { title, description, priority, status, assignedTo } = req.body
 
     const task = await Task.findById(req.params.id)
 
@@ -130,7 +129,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
     if (description !== undefined) task.description = description
     if (priority) task.priority = priority
     if (status) task.status = status
-    if (assignee !== undefined) task.assignee = assignee || null
+    if (assignedTo !== undefined) task.assignedTo = assignedTo
 
     await task.save()
 

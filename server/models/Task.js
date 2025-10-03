@@ -13,15 +13,16 @@ const taskSchema = new mongoose.Schema(
       type: String,
       trim: true,
       maxlength: 1000,
+      default: '',
     },
     status: {
       type: String,
-      enum: ['pending', 'in-progress', 'completed'],
-      default: 'pending',
+      enum: ['todo', 'in-progress', 'completed'],
+      default: 'todo',
     },
     priority: {
       type: String,
-      enum: ['low', 'medium', 'high', 'urgent'],
+      enum: ['low', 'medium', 'high'],
       default: 'medium',
     },
     project: {
@@ -29,9 +30,9 @@ const taskSchema = new mongoose.Schema(
       ref: 'Project',
       required: true,
     },
-    assignee: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+    assignedTo: {
+      type: String,
+      default: 'Unassigned',
     },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
@@ -46,6 +47,5 @@ const taskSchema = new mongoose.Schema(
 
 // Index for better query performance
 taskSchema.index({ project: 1, status: 1 })
-taskSchema.index({ assignee: 1 })
 
 module.exports = mongoose.models.Task || mongoose.model('Task', taskSchema)

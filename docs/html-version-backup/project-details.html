@@ -246,16 +246,43 @@
         </div>
         <form id="inviteMemberForm" class="modal-form">
           <div class="input-group">
+            <label>Invite By</label>
+            <div class="invite-type-toggle">
+              <button
+                type="button"
+                class="toggle-btn active"
+                data-type="username"
+              >
+                Username
+              </button>
+              <button type="button" class="toggle-btn" data-type="email">
+                Email
+              </button>
+            </div>
+          </div>
+
+          <div class="input-group" id="usernameInviteGroup">
+            <label for="inviteUsername">Username</label>
+            <input
+              type="text"
+              id="inviteUsername"
+              placeholder="Enter username"
+              autocomplete="off"
+            />
+            <small style="color: #718096; margin-top: 0.5rem; display: block">
+              Invite a registered user by their username.
+            </small>
+          </div>
+
+          <div class="input-group" id="emailInviteGroup" style="display: none">
             <label for="inviteEmail">Email Address</label>
             <input
               type="email"
               id="inviteEmail"
               placeholder="teammate@example.com"
-              required
             />
             <small style="color: #718096; margin-top: 0.5rem; display: block">
-              Enter the email address of the person you want to invite to this
-              project.
+              Send an invitation to someone who hasn't signed up yet.
             </small>
           </div>
 

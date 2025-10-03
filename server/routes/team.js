@@ -2,7 +2,7 @@
 const express = require('express')
 const router = express.Router()
 const Project = require('../models/project')
-const User = require('../models/User')
+const User = require('../models/user')
 const authenticateToken = require('../middleware/auth')
 
 // Get team members for a project
@@ -35,16 +35,18 @@ router.get(
   }
 )
 
-// Invite user to project by email
+// Invite user to project by email or username
 router.post(
   '/project/:projectId/invite',
   authenticateToken,
   async (req, res) => {
     try {
-      const { email } = req.body
+      const { email, username } = req.body
 
-      if (!email) {
-        return res.status(400).json({ message: 'Email is required' })
+      if (!email && !username) {
+        return res
+          .status(400)
+          .json({ message: 'Email or username is required' })
       }
 
       const project = await Project.findById(req.params.projectId)
@@ -60,41 +62,81 @@ router.post(
           .json({ message: 'Only owners and admins can invite members' })
       }
 
-      // Check if user is already a member
-      const existingMember = project.members.find(
-        (m) => m.user && m.user.toString() === email
-      )
+      let inviteEmail = email
+      let existingUser = null
 
-      if (existingMember) {
-        return res.status(400).json({ message: 'User is already a member' })
+      // If username is provided, find the user
+      if (username) {
+        existingUser = await User.findOne({ username })
+
+        if (!existingUser) {
+          return res
+            .status(404)
+            .json({ message: 'User not found with that username' })
+        }
+
+        inviteEmail = existingUser.email
+
+        // Check if user is already a member
+        const isAlreadyMember = project.members.some(
+          (m) =>
+            (m.user._id || m.user).toString() === existingUser._id.toString()
+        )
+
+        if (isAlreadyMember) {
+          return res
+            .status(400)
+            .json({ message: 'User is already a member of this project' })
+        }
+      } else {
+        // Check if email user is already a member (if they exist)
+        existingUser = await User.findOne({ email: inviteEmail.toLowerCase() })
+
+        if (existingUser) {
+          const isAlreadyMember = project.members.some(
+            (m) =>
+              (m.user._id || m.user).toString() === existingUser._id.toString()
+          )
+
+          if (isAlreadyMember) {
+            return res
+              .status(400)
+              .json({ message: 'User is already a member of this project' })
+          }
+        }
       }
 
       // Check if invitation already exists
       const existingInvitation = project.invitations.find(
-        (inv) => inv.email === email.toLowerCase() && inv.status === 'pending'
+        (inv) =>
+          inv.email === inviteEmail.toLowerCase() && inv.status === 'pending'
       )
 
       if (existingInvitation) {
         return res
           .status(400)
-          .json({ message: 'Invitation already sent to this email' })
+          .json({ message: 'Invitation already sent to this user' })
       }
 
       // Add invitation
       project.invitations.push({
-        email: email.toLowerCase(),
+        email: inviteEmail.toLowerCase(),
         invitedBy: req.userId,
         status: 'pending',
       })
 
       await project.save()
 
-      console.log('✅ Invitation sent:', { email, project: project.title })
+      console.log('✅ Invitation sent:', {
+        email: inviteEmail,
+        username: username || 'N/A',
+        project: project.title,
+      })
 
       // TODO: Send email notification (we'll implement this later)
 
       res.status(201).json({
-        message: 'Invitation sent successfully',
+        message: `Invitation sent successfully to ${username || inviteEmail}`,
         invitation: project.invitations[project.invitations.length - 1],
       })
     } catch (error) {
@@ -363,7 +405,7 @@ router.post(
 
       // Find the member
       const memberIndex = project.members.findIndex(
-        (m) => m.user.toString() === req.userId.toString()
+        (m) => (m.user._id || m.user).toString() === req.userId.toString()
       )
 
       if (memberIndex === -1) {
