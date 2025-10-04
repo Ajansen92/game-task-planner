@@ -395,3 +395,15 @@
     padding: 1rem;
   }
 }
+
+/* Online Indicator */
+.online-indicator {
+  background: rgba(16, 185, 129, 0.2);
+  color: #6ee7b7;
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}

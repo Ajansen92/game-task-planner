@@ -13,21 +13,53 @@ import TaskModal from './TaskModal'
 import AddTaskModal from './AddTaskModal'
 import InviteMemberModal from './InviteMemberModal'
 import { tasksAPI } from '../services/api'
+// import socketService from '../services/socket'
 import './ProjectDetail.css'
 
-export default function ProjectDetail({ project, onBack, onUpdateTasks }) {
+export default function ProjectDetail({
+  project,
+  onBack,
+  onUpdateTasks,
+  currentUser,
+}) {
   const [selectedTask, setSelectedTask] = useState(null)
   const [showAddTaskModal, setShowAddTaskModal] = useState(false)
   const [showInviteMemberModal, setShowInviteMemberModal] = useState(false)
   const [tasks, setTasks] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [onlineUsers, setOnlineUsers] = useState(0)
 
   const [members] = useState([
     { id: 1, name: 'You', role: 'owner', avatar: '👤' },
     { id: 2, name: 'DiamondMiner42', role: 'member', avatar: '💎' },
     { id: 3, name: 'FarmQueen', role: 'member', avatar: '🌾' },
   ])
+
+  // Join project room and set up Socket.io listeners
+  useEffect(() => {
+    // Join the project room
+    // socketService.joinProject(project.id)
+
+    // Set up real-time listeners
+    // socketService.onTaskCreated(handleTaskCreatedFromSocket)
+    // socketService.onTaskUpdated(handleTaskUpdatedFromSocket)
+    // socketService.onTaskDeleted(handleTaskDeletedFromSocket)
+    // socketService.onUserJoined(() => setOnlineUsers((prev) => prev + 1))
+    // socketService.onUserLeft(() =>
+    //   setOnlineUsers((prev) => Math.max(0, prev - 1))
+    // )
+
+    // Cleanup on unmount
+    return () => {
+      // socketService.leaveProject(project.id)
+      // socketService.off('task-created')
+      // socketService.off('task-updated')
+      // socketService.off('task-deleted')
+      // socketService.off('user-joined')
+      // socketService.off('user-left')
+    }
+  }, [project.id])
 
   // Fetch tasks when component mounts
   useEffect(() => {
@@ -58,6 +90,40 @@ export default function ProjectDetail({ project, onBack, onUpdateTasks }) {
     } finally {
       setLoading(false)
     }
+  }
+
+  // Socket.io event handlers
+  const handleTaskCreatedFromSocket = (task) => {
+    console.log('🔔 Real-time: Task created', task)
+    const transformedTask = {
+      id: task._id,
+      title: task.title,
+      description: task.description || '',
+      status: task.status,
+      assignedTo: task.assignedTo || 'Unassigned',
+      priority: task.priority,
+    }
+    setTasks((prev) => [...prev, transformedTask])
+  }
+
+  const handleTaskUpdatedFromSocket = (task) => {
+    console.log('🔔 Real-time: Task updated', task)
+    const transformedTask = {
+      id: task._id,
+      title: task.title,
+      description: task.description || '',
+      status: task.status,
+      assignedTo: task.assignedTo || 'Unassigned',
+      priority: task.priority,
+    }
+    setTasks((prev) =>
+      prev.map((t) => (t.id === transformedTask.id ? transformedTask : t))
+    )
+  }
+
+  const handleTaskDeletedFromSocket = (taskId) => {
+    console.log('🔔 Real-time: Task deleted', taskId)
+    setTasks((prev) => prev.filter((t) => t.id !== taskId))
   }
 
   const getTasksByStatus = (status) => {
@@ -109,6 +175,12 @@ export default function ProjectDetail({ project, onBack, onUpdateTasks }) {
       )
       setTasks(newTasks)
       if (onUpdateTasks) onUpdateTasks(newTasks)
+
+      // Emit real-time update
+      // socketService.emitTaskUpdated(project.id, {
+      //   _id: updatedTask.id,
+      //   ...updatedTask,
+      // })
     } catch (err) {
       console.error('Failed to update task:', err)
       alert('Failed to update task. Please try again.')
@@ -122,6 +194,9 @@ export default function ProjectDetail({ project, onBack, onUpdateTasks }) {
       const newTasks = tasks.filter((t) => t.id !== taskId)
       setTasks(newTasks)
       if (onUpdateTasks) onUpdateTasks(newTasks)
+
+      // Emit real-time update
+      // socketService.emitTaskDeleted(project.id, taskId)
     } catch (err) {
       console.error('Failed to delete task:', err)
       alert('Failed to delete task. Please try again.')
@@ -144,6 +219,9 @@ export default function ProjectDetail({ project, onBack, onUpdateTasks }) {
       const newTasks = [...tasks, createdTask]
       setTasks(newTasks)
       if (onUpdateTasks) onUpdateTasks(newTasks)
+
+      // Emit real-time update
+      // socketService.emitTaskCreated(project.id, response.task)
     } catch (err) {
       console.error('Failed to create task:', err)
       alert('Failed to create task. Please try again.')
@@ -178,6 +256,12 @@ export default function ProjectDetail({ project, onBack, onUpdateTasks }) {
         )
         setTasks(newTasks)
         if (onUpdateTasks) onUpdateTasks(newTasks)
+
+        // Emit real-time update
+        // socketService.emitTaskUpdated(project.id, {
+        //   _id: updatedTask.id,
+        //   ...updatedTask,
+        // })
       } catch (err) {
         console.error('Failed to update task status:', err)
         alert('Failed to move task. Please try again.')
@@ -204,6 +288,11 @@ export default function ProjectDetail({ project, onBack, onUpdateTasks }) {
             <div className="project-title-section">
               <h1 className="project-title">{project.name}</h1>
               <span className="game-tag">{project.game}</span>
+              {onlineUsers > 0 && (
+                <span className="online-indicator">
+                  🟢 {onlineUsers + 1} online
+                </span>
+              )}
             </div>
 
             <div className="project-meta">
@@ -436,6 +525,8 @@ export default function ProjectDetail({ project, onBack, onUpdateTasks }) {
           onClose={() => setSelectedTask(null)}
           onSave={handleSaveTask}
           onDelete={handleDeleteTask}
+          projectId={project.id}
+          currentUser={currentUser}
         />
       )}
 

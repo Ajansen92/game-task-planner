@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { X, Save, Trash2, User, Flag, Clock } from 'lucide-react'
+import TaskComments from './TaskComments'
 import './TaskModal.css'
 
 export default function TaskModal({
@@ -8,6 +9,8 @@ export default function TaskModal({
   onClose,
   onSave,
   onDelete,
+  projectId,
+  currentUser,
 }) {
   const [editedTask, setEditedTask] = useState({
     title: task.title,
@@ -122,6 +125,15 @@ export default function TaskModal({
               <option value="medium">Medium</option>
               <option value="high">High</option>
             </select>
+          </div>
+
+          {/* Comments Section */}
+          <div className="comments-section">
+            <TaskComments
+              taskId={task._id || task.id}
+              projectId={projectId}
+              currentUser={currentUser}
+            />
           </div>
         </div>
 

@@ -1,41 +1,33 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import Dashboard from './components/Dashboard'
-import Auth from './components/auth'
-import './App.css'
+import Auth from './components/Auth'
+import socketService from './services/socket'
 
 function App() {
   const [user, setUser] = useState(null)
-  const [loading, setLoading] = useState(true)
 
-  // Check if user is already logged in on mount
   useEffect(() => {
     const token = localStorage.getItem('token')
     const savedUser = localStorage.getItem('user')
 
     if (token && savedUser) {
       setUser(JSON.parse(savedUser))
+      //socketService.connect(token)
     }
-    setLoading(false)
   }, [])
 
   const handleLogin = (userData, token) => {
-    setUser(userData)
-    localStorage.setItem('user', JSON.stringify(userData))
     localStorage.setItem('token', token)
+    localStorage.setItem('user', JSON.stringify(userData))
+    setUser(userData)
+    //socketService.connect(token)
   }
 
   const handleLogout = () => {
-    setUser(null)
-    localStorage.removeItem('user')
     localStorage.removeItem('token')
-  }
-
-  if (loading) {
-    return (
-      <div className="App loading-screen">
-        <p>Loading...</p>
-      </div>
-    )
+    localStorage.removeItem('user')
+    //socketService.disconnect()
+    setUser(null)
   }
 
   return (

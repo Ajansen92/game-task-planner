@@ -136,6 +136,7 @@ export default function Dashboard({ user, onLogout }) {
         onUpdateTasks={(updatedTasks) =>
           handleUpdateProjectTasks(selectedProject.id, updatedTasks)
         }
+        currentUser={user}
       />
     )
   }

@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const API_BASE_URL = 'http://localhost:3000/api'
+const API_BASE_URL = 'http://localhost:5000/api'
 
 // Create axios instance with default config
 const api = axios.create({
@@ -154,6 +154,38 @@ export const invitationsAPI = {
   // Decline invitation
   decline: async (invitationId) => {
     const response = await api.post(`/invitations/${invitationId}/decline`)
+    return response.data
+  },
+}
+
+// Comments API
+export const commentsAPI = {
+  // Get all comments for a task
+  getByTask: async (taskId) => {
+    const response = await api.get(`/comments/task/${taskId}`)
+    return response.data
+  },
+
+  // Create comment
+  create: async (taskId, text) => {
+    const response = await api.post('/comments', {
+      taskId,
+      text,
+    })
+    return response.data
+  },
+
+  // Update comment
+  update: async (commentId, text) => {
+    const response = await api.put(`/comments/${commentId}`, {
+      text,
+    })
+    return response.data
+  },
+
+  // Delete comment
+  delete: async (commentId) => {
+    const response = await api.delete(`/comments/${commentId}`)
     return response.data
   },
 }
