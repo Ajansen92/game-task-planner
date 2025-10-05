@@ -1,5 +1,5 @@
 {
-  "name": "game-task-planner",
+  "name": "questboard",
   "version": "1.0.0",
   "description": "A collaborative platform for coordinating game tasks",
   "main": "server/app.js",

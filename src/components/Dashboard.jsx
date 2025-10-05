@@ -170,7 +170,7 @@ export default function Dashboard({ user, onLogout }) {
           <div className="header-left">
             <h1 className="header-title">
               <Users className="header-icon" />
-              Game Project Planner
+              QuestBoard
             </h1>
           </div>
           <div className="header-actions">
