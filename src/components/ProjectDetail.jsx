@@ -8,10 +8,12 @@ import {
   CheckCircle2,
   Circle,
   Clock,
+  User,
 } from 'lucide-react'
 import TaskModal from './TaskModal'
 import AddTaskModal from './AddTaskModal'
 import InviteMemberModal from './InviteMemberModal'
+import PublicProfile from './PublicProfile'
 import { tasksAPI } from '../services/api'
 import socketService from '../services/socket'
 import './ProjectDetail.css'
@@ -25,12 +27,14 @@ export default function ProjectDetail({
   const [selectedTask, setSelectedTask] = useState(null)
   const [showAddTaskModal, setShowAddTaskModal] = useState(false)
   const [showInviteMemberModal, setShowInviteMemberModal] = useState(false)
+  const [viewingProfile, setViewingProfile] = useState(null)
   const [tasks, setTasks] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [onlineUsers, setOnlineUsers] = useState(0)
   const [members, setMembers] = useState([])
   const [loadingMembers, setLoadingMembers] = useState(true)
+  const [draggedTask, setDraggedTask] = useState(null)
 
   // Fetch project members
   useEffect(() => {
@@ -52,12 +56,15 @@ export default function ProjectDetail({
 
         const data = await response.json()
 
-        // Transform to match expected format
+        // Transform to match expected format with full user data
         const transformedMembers = data.map((member) => ({
+          _id: member.user._id,
           id: member.user._id,
           name: member.user.username,
+          username: member.user.username,
+          displayName: member.user.displayName,
+          avatar: member.user.avatar,
           role: member.role,
-          avatar: member.user.username.charAt(0).toUpperCase() + '👤',
         }))
 
         setMembers(transformedMembers)
@@ -253,9 +260,6 @@ export default function ProjectDetail({
     }
   }
 
-  // Drag and Drop handlers
-  const [draggedTask, setDraggedTask] = useState(null)
-
   const handleDragStart = (e, task) => {
     setDraggedTask(task)
     e.dataTransfer.effectAllowed = 'move'
@@ -314,10 +318,13 @@ export default function ProjectDetail({
         )
         const data = await response.json()
         const transformedMembers = data.map((member) => ({
+          _id: member.user._id,
           id: member.user._id,
           name: member.user.username,
+          username: member.user.username,
+          displayName: member.user.displayName,
+          avatar: member.user.avatar,
           role: member.role,
-          avatar: member.user.username.charAt(0).toUpperCase() + '👤',
         }))
         setMembers(transformedMembers)
       } catch (err) {
@@ -325,6 +332,16 @@ export default function ProjectDetail({
       }
     }
     fetchMembers()
+  }
+
+  // If viewing a profile, show public profile (AFTER all hooks)
+  if (viewingProfile) {
+    return (
+      <PublicProfile
+        userId={viewingProfile}
+        onBack={() => setViewingProfile(null)}
+      />
+    )
   }
 
   return (
@@ -398,9 +415,30 @@ export default function ProjectDetail({
               ) : members && members.length > 0 ? (
                 members.map((member) => (
                   <div key={member.id} className="member-card">
-                    <div className="member-avatar">{member.avatar}</div>
+                    <div
+                      className="member-avatar-container"
+                      onClick={() => setViewingProfile(member._id)}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      {member.avatar ? (
+                        <img
+                          src={member.avatar}
+                          alt={member.username}
+                          className="member-avatar-img"
+                        />
+                      ) : (
+                        <div className="member-avatar-placeholder">
+                          <User size={20} />
+                        </div>
+                      )}
+                    </div>
                     <div className="member-info">
-                      <p className="member-name">{member.name}</p>
+                      <p
+                        className="member-name clickable-username"
+                        onClick={() => setViewingProfile(member._id)}
+                      >
+                        {member.displayName || member.name}
+                      </p>
                       <span className={`member-role ${member.role}`}>
                         {member.role}
                       </span>
@@ -582,6 +620,7 @@ export default function ProjectDetail({
           onDelete={handleDeleteTask}
           projectId={project.id}
           currentUser={currentUser}
+          onViewProfile={setViewingProfile}
         />
       )}
 

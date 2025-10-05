@@ -1,0 +1,189 @@
+/* Public Profile */
+.public-profile-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  padding: 2rem;
+}
+
+.public-profile-header {
+  max-width: 800px;
+  margin: 0 auto 2rem;
+}
+
+.back-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  color: #00d4ff;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 8px 16px;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+}
+
+.back-button:hover {
+  background: rgba(0, 212, 255, 0.1);
+}
+
+.back-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.public-profile-content {
+  max-width: 800px;
+  margin: 0 auto;
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+  border-radius: 16px;
+  padding: 3rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  border: 1px solid #333;
+}
+
+/* Hero Section */
+.profile-hero {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  padding-bottom: 2rem;
+  margin-bottom: 2rem;
+  border-bottom: 2px solid #2a2a2a;
+}
+
+.hero-avatar {
+  flex-shrink: 0;
+}
+
+.hero-avatar-image {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #00d4ff;
+  box-shadow: 0 8px 20px rgba(0, 212, 255, 0.3);
+}
+
+.hero-avatar-placeholder {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: #2a2a2a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 4px solid #444;
+}
+
+.hero-avatar-icon {
+  width: 60px;
+  height: 60px;
+  color: #666;
+}
+
+.hero-info {
+  flex: 1;
+}
+
+.hero-username {
+  font-size: 2rem;
+  color: #00d4ff;
+  margin: 0 0 0.5rem 0;
+  font-weight: 700;
+}
+
+.hero-handle {
+  font-size: 1.1rem;
+  color: #999;
+  margin: 0 0 1rem 0;
+}
+
+.hero-joined {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #aaa;
+  font-size: 0.95rem;
+}
+
+.hero-icon {
+  width: 18px;
+  height: 18px;
+  color: #00d4ff;
+}
+
+/* Profile Section */
+.profile-section {
+  margin-top: 2rem;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.3rem;
+  color: #00d4ff;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.section-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.profile-bio {
+  color: #ddd;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  margin: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.empty-profile {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: #999;
+  font-style: italic;
+}
+
+/* Loading and Error States */
+.loading-state,
+.error-state {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 3rem;
+  text-align: center;
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+  border-radius: 16px;
+  border: 1px solid #333;
+  color: #aaa;
+  font-size: 1.1rem;
+}
+
+.error-state {
+  color: #ff4757;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .public-profile-container {
+    padding: 1rem;
+  }
+
+  .public-profile-content {
+    padding: 2rem 1.5rem;
+  }
+
+  .profile-hero {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .hero-username {
+    font-size: 1.5rem;
+  }
+}

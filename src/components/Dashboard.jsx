@@ -8,10 +8,12 @@ import {
   Calendar,
   ListTodo,
   LogOut,
+  User,
 } from 'lucide-react'
 import ProjectDetail from './ProjectDetail'
 import CreateProjectModal from './CreateProjectModal'
 import NotificationBell from './NotificationBell'
+import UserProfile from './UserProfile'
 import { projectsAPI, invitationsAPI } from '../services/api'
 import './Dashboard.css'
 
@@ -19,6 +21,8 @@ export default function Dashboard({ user, onLogout }) {
   const [activeView, setActiveView] = useState('dashboard')
   const [selectedProject, setSelectedProject] = useState(null)
   const [showCreateProjectModal, setShowCreateProjectModal] = useState(false)
+  const [showProfile, setShowProfile] = useState(false)
+  const [currentUser, setCurrentUser] = useState(user)
   const [projects, setProjects] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -128,6 +132,22 @@ export default function Dashboard({ user, onLogout }) {
     )
   }
 
+  const handleProfileUpdate = (updatedUser) => {
+    setCurrentUser(updatedUser)
+    localStorage.setItem('user', JSON.stringify(updatedUser))
+  }
+
+  // If profile is shown, display profile view
+  if (showProfile) {
+    return (
+      <UserProfile
+        user={currentUser}
+        onBack={() => setShowProfile(false)}
+        onProfileUpdate={handleProfileUpdate}
+      />
+    )
+  }
+
   // If a project is selected, show the detail view
   if (selectedProject) {
     return (
@@ -137,7 +157,7 @@ export default function Dashboard({ user, onLogout }) {
         onUpdateTasks={(updatedTasks) =>
           handleUpdateProjectTasks(selectedProject.id, updatedTasks)
         }
-        currentUser={user}
+        currentUser={currentUser}
       />
     )
   }
@@ -154,8 +174,25 @@ export default function Dashboard({ user, onLogout }) {
             </h1>
           </div>
           <div className="header-actions">
-            <span className="user-name">👋 {user?.username || 'User'}</span>
+            <span className="user-name">
+              👋 {currentUser?.displayName || currentUser?.username || 'User'}
+            </span>
             <NotificationBell />
+            <button
+              className="btn-profile"
+              onClick={() => setShowProfile(true)}
+              title="Edit Profile"
+            >
+              {currentUser?.avatar ? (
+                <img
+                  src={currentUser.avatar}
+                  alt="Profile"
+                  className="header-avatar"
+                />
+              ) : (
+                <User className="btn-icon" />
+              )}
+            </button>
             <button
               className="btn-primary"
               onClick={() => setShowCreateProjectModal(true)}

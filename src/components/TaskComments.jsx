@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from 'react'
-import { Send, Edit2, Trash2, MessageCircle } from 'lucide-react'
+import { Send, Edit2, Trash2, MessageCircle, User } from 'lucide-react'
 import { commentsAPI } from '../services/api'
 import socketService from '../services/socket'
 import './TaskComments.css'
 
-export default function TaskComments({ taskId, projectId, currentUser }) {
+export default function TaskComments({
+  taskId,
+  projectId,
+  currentUser,
+  onViewProfile,
+}) {
   const [comments, setComments] = useState([])
   const [newComment, setNewComment] = useState('')
   const [editingCommentId, setEditingCommentId] = useState(null)
@@ -139,6 +144,12 @@ export default function TaskComments({ taskId, projectId, currentUser }) {
     return date.toLocaleDateString()
   }
 
+  const handleUsernameClick = (userId) => {
+    if (onViewProfile && userId) {
+      onViewProfile(userId)
+    }
+  }
+
   return (
     <div className="task-comments">
       <div className="comments-header">
@@ -183,9 +194,33 @@ export default function TaskComments({ taskId, projectId, currentUser }) {
             <div key={comment._id} className="comment-card">
               <div className="comment-header">
                 <div className="comment-author">
-                  <span className="author-avatar">💬</span>
-                  <span className="author-name">
-                    {comment.createdBy?.username || 'Unknown User'}
+                  <div
+                    className="author-avatar-container"
+                    onClick={() => handleUsernameClick(comment.createdBy?._id)}
+                    style={{ cursor: onViewProfile ? 'pointer' : 'default' }}
+                  >
+                    {comment.createdBy?.avatar ? (
+                      <img
+                        src={comment.createdBy.avatar}
+                        alt={comment.createdBy.username}
+                        className="author-avatar-img"
+                      />
+                    ) : (
+                      <div className="author-avatar-placeholder">
+                        <User size={16} />
+                      </div>
+                    )}
+                  </div>
+                  <span
+                    className={`author-name ${
+                      onViewProfile ? 'clickable-username' : ''
+                    }`}
+                    onClick={() => handleUsernameClick(comment.createdBy?._id)}
+                    style={{ cursor: onViewProfile ? 'pointer' : 'default' }}
+                  >
+                    {comment.createdBy?.displayName ||
+                      comment.createdBy?.username ||
+                      'Unknown User'}
                   </span>
                   <span className="comment-time">
                     {formatTime(comment.createdAt)}

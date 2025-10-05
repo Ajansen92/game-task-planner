@@ -36,6 +36,7 @@ const taskRoutes = require('./routes/tasks')
 const invitationRoutes = require('./routes/invitations')
 const commentRoutes = require('./routes/comments')
 const notificationRoutes = require('./routes/Notifications')
+const userRoutes = require('./routes/users')
 
 app.use('/api/auth', authRoutes)
 app.use('/api/projects', projectRoutes)
@@ -43,6 +44,7 @@ app.use('/api/tasks', taskRoutes)
 app.use('/api/invitations', invitationRoutes)
 app.use('/api/comments', commentRoutes)
 app.use('/api/notifications', notificationRoutes)
+app.use('/api/users', userRoutes)
 
 // MongoDB connection
 mongoose

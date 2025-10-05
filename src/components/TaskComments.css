@@ -284,3 +284,42 @@
     justify-content: center;
   }
 }
+
+/* Add these new styles to your existing TaskComments.css */
+
+.author-avatar-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 8px;
+}
+
+.author-avatar-img {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #00d4ff;
+}
+
+.author-avatar-placeholder {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #2a2a2a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #444;
+}
+
+.clickable-username {
+  cursor: pointer;
+  color: #00d4ff;
+  transition: color 0.2s;
+}
+
+.clickable-username:hover {
+  color: #00a3cc;
+  text-decoration: underline;
+}

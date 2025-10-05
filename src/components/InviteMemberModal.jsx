@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { X, Search, UserPlus } from 'lucide-react'
 import { invitationsAPI } from '../services/api'
-import './TaskModal.css'
+import './InviteMemberModal.css'
 
 export default function InviteMemberModal({
   projectId,

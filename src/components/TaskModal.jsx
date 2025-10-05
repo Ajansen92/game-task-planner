@@ -11,6 +11,7 @@ export default function TaskModal({
   onDelete,
   projectId,
   currentUser,
+  onViewProfile,
 }) {
   const [editedTask, setEditedTask] = useState({
     title: task.title,
@@ -133,6 +134,7 @@ export default function TaskModal({
               taskId={task._id || task.id}
               projectId={projectId}
               currentUser={currentUser}
+              onViewProfile={onViewProfile}
             />
           </div>
         </div>

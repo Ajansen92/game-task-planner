@@ -23,6 +23,21 @@ const userSchema = new mongoose.Schema(
       required: true,
       minlength: 6,
     },
+    // NEW PROFILE FIELDS
+    avatar: {
+      type: String,
+      default: null, // base64 encoded image or null
+    },
+    bio: {
+      type: String,
+      default: '',
+      maxlength: 500,
+    },
+    displayName: {
+      type: String,
+      default: '',
+      maxlength: 100,
+    },
   },
   {
     timestamps: true,
