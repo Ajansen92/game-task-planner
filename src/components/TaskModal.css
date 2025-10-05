@@ -109,6 +109,44 @@
   font-family: inherit;
 }
 
+/* Search Input Container */
+.search-input-container {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.search-input-container .form-input {
+  flex: 1;
+}
+
+.search-button {
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.search-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0099cc 0%, #00d4ff 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 212, 255, 0.4);
+}
+
+.search-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .form-input:focus,
 .form-textarea:focus,
 .form-select:focus {
@@ -156,10 +194,10 @@
   gap: 12px;
 }
 
-/* Buttons */
-.btn-delete,
-.btn-cancel,
-.btn-save {
+/* Buttons - SCOPED TO MODAL ONLY */
+.modal-content .btn-delete,
+.modal-content .btn-cancel,
+.modal-content .btn-save {
   padding: 10px 20px;
   border: none;
   border-radius: 8px;
@@ -172,41 +210,41 @@
   gap: 8px;
 }
 
-.btn-delete {
+.modal-content .btn-delete {
   background: linear-gradient(135deg, #ff4757 0%, #ff6348 100%);
   color: white;
 }
 
-.btn-delete:hover {
+.modal-content .btn-delete:hover {
   background: linear-gradient(135deg, #ff6348 0%, #ff4757 100%);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(255, 71, 87, 0.4);
 }
 
-.btn-cancel {
+.modal-content .btn-cancel {
   background: #2a2a2a;
   color: #ccc;
   border: 2px solid #333;
 }
 
-.btn-cancel:hover {
+.modal-content .btn-cancel:hover {
   background: #333;
   color: #fff;
   border-color: #444;
 }
 
-.btn-save {
+.modal-content .btn-save {
   background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
   color: white;
 }
 
-.btn-save:hover {
+.modal-content .btn-save:hover {
   background: linear-gradient(135deg, #0099cc 0%, #00d4ff 100%);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 212, 255, 0.4);
 }
 
-.btn-icon {
+.modal-content .btn-icon {
   width: 18px;
   height: 18px;
 }
@@ -257,9 +295,9 @@
     justify-content: stretch;
   }
 
-  .btn-delete,
-  .btn-cancel,
-  .btn-save {
+  .modal-content .btn-delete,
+  .modal-content .btn-cancel,
+  .modal-content .btn-save {
     flex: 1;
     justify-content: center;
   }

@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import ProjectDetail from './ProjectDetail'
 import CreateProjectModal from './CreateProjectModal'
+import NotificationBell from './NotificationBell'
 import { projectsAPI, invitationsAPI } from '../services/api'
 import './Dashboard.css'
 
@@ -154,6 +155,7 @@ export default function Dashboard({ user, onLogout }) {
           </div>
           <div className="header-actions">
             <span className="user-name">👋 {user?.username || 'User'}</span>
+            <NotificationBell />
             <button
               className="btn-primary"
               onClick={() => setShowCreateProjectModal(true)}

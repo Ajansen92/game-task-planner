@@ -86,6 +86,30 @@ router.get('/:id', authenticateToken, async (req, res) => {
   }
 })
 
+// Get project members - NEW ENDPOINT
+router.get('/:id/members', authenticateToken, async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.id).populate(
+      'members.user',
+      'username email'
+    )
+
+    if (!project) {
+      return res.status(404).json({ message: 'Project not found' })
+    }
+
+    // Check if user has access
+    if (!project.hasAccess(req.userId)) {
+      return res.status(403).json({ message: 'Access denied' })
+    }
+
+    res.json(project.members)
+  } catch (error) {
+    console.error('❌ Get members error:', error)
+    res.status(500).json({ message: 'Server error' })
+  }
+})
+
 // Create new project
 router.post('/', authenticateToken, async (req, res) => {
   try {

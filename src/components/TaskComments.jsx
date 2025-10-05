@@ -65,7 +65,7 @@ export default function TaskComments({ taskId, projectId, currentUser }) {
       setSending(true)
       const response = await commentsAPI.create(taskId, newComment.trim())
 
-      setComments((prev) => [response.comment, ...prev])
+      setComments((prev) => [response, ...prev])
       setNewComment('')
 
       // Emit real-time update

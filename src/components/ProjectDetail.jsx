@@ -13,7 +13,7 @@ import TaskModal from './TaskModal'
 import AddTaskModal from './AddTaskModal'
 import InviteMemberModal from './InviteMemberModal'
 import { tasksAPI } from '../services/api'
-// import socketService from '../services/socket'
+import socketService from '../services/socket'
 import './ProjectDetail.css'
 
 export default function ProjectDetail({
@@ -29,35 +29,60 @@ export default function ProjectDetail({
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [onlineUsers, setOnlineUsers] = useState(0)
+  const [members, setMembers] = useState([])
+  const [loadingMembers, setLoadingMembers] = useState(true)
 
-  const [members] = useState([
-    { id: 1, name: 'You', role: 'owner', avatar: '👤' },
-    { id: 2, name: 'DiamondMiner42', role: 'member', avatar: '💎' },
-    { id: 3, name: 'FarmQueen', role: 'member', avatar: '🌾' },
-  ])
+  // Fetch project members
+  useEffect(() => {
+    const fetchMembers = async () => {
+      try {
+        setLoadingMembers(true)
+        const response = await fetch(
+          `http://localhost:5000/api/projects/${project.id}/members`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('token')}`,
+            },
+          }
+        )
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch members')
+        }
+
+        const data = await response.json()
+
+        // Transform to match expected format
+        const transformedMembers = data.map((member) => ({
+          id: member.user._id,
+          name: member.user.username,
+          role: member.role,
+          avatar: member.user.username.charAt(0).toUpperCase() + '👤',
+        }))
+
+        setMembers(transformedMembers)
+      } catch (err) {
+        console.error('Failed to fetch members:', err)
+      } finally {
+        setLoadingMembers(false)
+      }
+    }
+
+    fetchMembers()
+  }, [project.id])
 
   // Join project room and set up Socket.io listeners
   useEffect(() => {
-    // Join the project room
-    // socketService.joinProject(project.id)
+    socketService.joinProject(project.id)
+    socketService.onTaskCreated(handleTaskCreatedFromSocket)
+    socketService.onTaskUpdated(handleTaskUpdatedFromSocket)
+    socketService.onTaskDeleted(handleTaskDeletedFromSocket)
 
-    // Set up real-time listeners
-    // socketService.onTaskCreated(handleTaskCreatedFromSocket)
-    // socketService.onTaskUpdated(handleTaskUpdatedFromSocket)
-    // socketService.onTaskDeleted(handleTaskDeletedFromSocket)
-    // socketService.onUserJoined(() => setOnlineUsers((prev) => prev + 1))
-    // socketService.onUserLeft(() =>
-    //   setOnlineUsers((prev) => Math.max(0, prev - 1))
-    // )
-
-    // Cleanup on unmount
     return () => {
-      // socketService.leaveProject(project.id)
-      // socketService.off('task-created')
-      // socketService.off('task-updated')
-      // socketService.off('task-deleted')
-      // socketService.off('user-joined')
-      // socketService.off('user-left')
+      socketService.leaveProject(project.id)
+      socketService.off('task-created')
+      socketService.off('task-updated')
+      socketService.off('task-deleted')
     }
   }, [project.id])
 
@@ -94,7 +119,7 @@ export default function ProjectDetail({
 
   // Socket.io event handlers
   const handleTaskCreatedFromSocket = (task) => {
-    console.log('🔔 Real-time: Task created', task)
+    console.log('Real-time: Task created', task)
     const transformedTask = {
       id: task._id,
       title: task.title,
@@ -107,7 +132,7 @@ export default function ProjectDetail({
   }
 
   const handleTaskUpdatedFromSocket = (task) => {
-    console.log('🔔 Real-time: Task updated', task)
+    console.log('Real-time: Task updated', task)
     const transformedTask = {
       id: task._id,
       title: task.title,
@@ -122,7 +147,7 @@ export default function ProjectDetail({
   }
 
   const handleTaskDeletedFromSocket = (taskId) => {
-    console.log('🔔 Real-time: Task deleted', taskId)
+    console.log('Real-time: Task deleted', taskId)
     setTasks((prev) => prev.filter((t) => t.id !== taskId))
   }
 
@@ -177,10 +202,10 @@ export default function ProjectDetail({
       if (onUpdateTasks) onUpdateTasks(newTasks)
 
       // Emit real-time update
-      // socketService.emitTaskUpdated(project.id, {
-      //   _id: updatedTask.id,
-      //   ...updatedTask,
-      // })
+      socketService.emitTaskUpdated(project.id, {
+        _id: updatedTask.id,
+        ...updatedTask,
+      })
     } catch (err) {
       console.error('Failed to update task:', err)
       alert('Failed to update task. Please try again.')
@@ -196,7 +221,7 @@ export default function ProjectDetail({
       if (onUpdateTasks) onUpdateTasks(newTasks)
 
       // Emit real-time update
-      // socketService.emitTaskDeleted(project.id, taskId)
+      socketService.emitTaskDeleted(project.id, taskId)
     } catch (err) {
       console.error('Failed to delete task:', err)
       alert('Failed to delete task. Please try again.')
@@ -221,7 +246,7 @@ export default function ProjectDetail({
       if (onUpdateTasks) onUpdateTasks(newTasks)
 
       // Emit real-time update
-      // socketService.emitTaskCreated(project.id, response.task)
+      socketService.emitTaskCreated(project.id, response.task)
     } catch (err) {
       console.error('Failed to create task:', err)
       alert('Failed to create task. Please try again.')
@@ -258,10 +283,10 @@ export default function ProjectDetail({
         if (onUpdateTasks) onUpdateTasks(newTasks)
 
         // Emit real-time update
-        // socketService.emitTaskUpdated(project.id, {
-        //   _id: updatedTask.id,
-        //   ...updatedTask,
-        // })
+        socketService.emitTaskUpdated(project.id, {
+          _id: updatedTask.id,
+          ...updatedTask,
+        })
       } catch (err) {
         console.error('Failed to update task status:', err)
         alert('Failed to move task. Please try again.')
@@ -272,6 +297,34 @@ export default function ProjectDetail({
 
   const handleDragEnd = () => {
     setDraggedTask(null)
+  }
+
+  const handleInviteSent = () => {
+    console.log('Invitation sent successfully!')
+    // Refresh members list
+    const fetchMembers = async () => {
+      try {
+        const response = await fetch(
+          `http://localhost:5000/api/projects/${project.id}/members`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('token')}`,
+            },
+          }
+        )
+        const data = await response.json()
+        const transformedMembers = data.map((member) => ({
+          id: member.user._id,
+          name: member.user.username,
+          role: member.role,
+          avatar: member.user.username.charAt(0).toUpperCase() + '👤',
+        }))
+        setMembers(transformedMembers)
+      } catch (err) {
+        console.error('Failed to refresh members:', err)
+      }
+    }
+    fetchMembers()
   }
 
   return (
@@ -290,7 +343,7 @@ export default function ProjectDetail({
               <span className="game-tag">{project.game}</span>
               {onlineUsers > 0 && (
                 <span className="online-indicator">
-                  🟢 {onlineUsers + 1} online
+                  {onlineUsers + 1} online
                 </span>
               )}
             </div>
@@ -298,7 +351,7 @@ export default function ProjectDetail({
             <div className="project-meta">
               <div className="meta-item">
                 <Users className="meta-icon" />
-                <span>{project.members} Members</span>
+                <span>{members.length} Members</span>
               </div>
               <div className="meta-item">
                 <Calendar className="meta-icon" />
@@ -340,7 +393,9 @@ export default function ProjectDetail({
           <aside className="members-sidebar">
             <h3 className="sidebar-title">Team Members</h3>
             <div className="members-list">
-              {members && members.length > 0 ? (
+              {loadingMembers ? (
+                <p className="loading-members">Loading members...</p>
+              ) : members && members.length > 0 ? (
                 members.map((member) => (
                   <div key={member.id} className="member-card">
                     <div className="member-avatar">{member.avatar}</div>
@@ -544,9 +599,7 @@ export default function ProjectDetail({
         <InviteMemberModal
           projectId={project.id}
           onClose={() => setShowInviteMemberModal(false)}
-          onInviteSent={() => {
-            console.log('Invitation sent successfully!')
-          }}
+          onInviteSent={handleInviteSent}
         />
       )}
     </div>

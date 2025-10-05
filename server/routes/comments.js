@@ -1,160 +1,210 @@
-// Comments routes
+// server/routes/comments.js - FIXED MEMBER POPULATION
 const express = require('express')
 const router = express.Router()
-const Comment = require('../models/comment')
+const Comment = require('../models/Comment')
 const Task = require('../models/task')
 const Project = require('../models/project')
-
-// Middleware to authenticate token
-const authenticateToken = require('../middleware/auth')
+const Notification = require('../models/Notification')
+const auth = require('../middleware/auth')
 
 // Get all comments for a task
-router.get('/task/:taskId', authenticateToken, async (req, res) => {
+router.get('/:taskId', auth, async (req, res) => {
   try {
-    const task = await Task.findById(req.params.taskId)
-
-    if (!task) {
-      return res.status(404).json({ message: 'Task not found' })
-    }
-
-    // Verify user has access to this task's project
-    const project = await Project.findById(task.project)
-    if (!project || !project.hasAccess(req.userId)) {
-      return res.status(403).json({ message: 'Access denied' })
-    }
-
     const comments = await Comment.find({ task: req.params.taskId })
-      .populate('createdBy', 'username')
+      .populate('createdBy', 'username email')
       .sort({ createdAt: -1 })
 
     res.json(comments)
   } catch (error) {
-    console.error('❌ Get comments error:', error)
-    res.status(500).json({ message: 'Server error' })
+    res.status(500).json({ message: error.message })
   }
 })
 
 // Create a comment
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/:taskId', auth, async (req, res) => {
   try {
-    const { text, taskId } = req.body
-
-    // Validation
-    if (!text || !taskId) {
-      return res.status(400).json({ message: 'Text and task ID are required' })
-    }
-
-    if (text.length > 1000) {
-      return res
-        .status(400)
-        .json({ message: 'Comment must be 1000 characters or less' })
-    }
-
-    // Verify task exists
-    const task = await Task.findById(taskId)
+    const task = await Task.findById(req.params.taskId)
     if (!task) {
       return res.status(404).json({ message: 'Task not found' })
     }
 
-    // Verify user has access to this task's project
-    const project = await Project.findById(task.project)
-    if (!project || !project.hasAccess(req.userId)) {
-      return res.status(403).json({ message: 'Access denied' })
-    }
-
-    // Create comment
-    const newComment = new Comment({
-      text,
-      task: taskId,
-      createdBy: req.userId,
+    const comment = new Comment({
+      text: req.body.text,
+      createdBy: req.user.id,
+      task: req.params.taskId,
     })
 
-    await newComment.save()
+    await comment.save()
+    await comment.populate('createdBy', 'username email')
 
-    // Populate the createdBy field before returning
-    await newComment.populate('createdBy', 'username')
+    // Emit real-time update
+    const io = req.app.get('io')
+    io.to(`project:${task.project}`).emit('comment:created', {
+      taskId: task._id,
+      comment,
+    })
 
-    console.log('✅ Comment created:', { taskId, text: text.substring(0, 50) })
+    // Return success immediately
+    res.status(201).json(comment)
 
-    res.status(201).json({
-      message: 'Comment created successfully',
-      comment: newComment,
+    // Try to create notifications asynchronously (don't block comment creation)
+    setImmediate(async () => {
+      console.log('🔔 Starting notification creation...')
+      try {
+        // Get all project members - populate members.user since members is an array of objects
+        const project = await Project.findById(task.project).populate(
+          'members.user',
+          '_id username'
+        )
+        console.log('📋 Project found:', !!project)
+        console.log('📋 Project members:', project?.members?.length)
+
+        if (project && project.members) {
+          // Notify each member except the commenter
+          for (const member of project.members) {
+            const memberId = member.user._id.toString()
+            console.log(
+              `👤 Checking member: ${memberId}, commenter: ${req.user.id}`
+            )
+
+            if (memberId !== req.user.id.toString()) {
+              console.log(`✅ Creating notification for member: ${memberId}`)
+
+              const notification = new Notification({
+                recipient: member.user._id,
+                sender: req.user.id,
+                type: 'task_comment',
+                title: 'New Comment',
+                message: `${req.user.username} commented on "${task.title}"`,
+                link: `/projects/${task.project}`,
+                project: task.project,
+                task: task._id,
+              })
+
+              await notification.save()
+              console.log(`📢 Emitting notification to user:${memberId}`)
+              await notification.populate('sender', 'username email')
+              io.to(`user:${memberId}`).emit('notification:new', notification)
+              console.log(`✅ Notification emitted successfully`)
+            } else {
+              console.log(`⏭️ Skipping commenter (same user)`)
+            }
+          }
+        } else {
+          console.log('❌ No project or members found')
+        }
+
+        // Check for @mentions in comment text
+        const mentionRegex = /@(\w+)/g
+        const mentions = req.body.text.match(mentionRegex)
+        if (mentions && project) {
+          console.log(`🏷️ Found mentions:`, mentions)
+          for (const mention of mentions) {
+            const username = mention.substring(1) // Remove @
+            const mentionedMember = project.members.find(
+              (m) => m.user.username === username
+            )
+
+            if (
+              mentionedMember &&
+              mentionedMember.user._id.toString() !== req.user.id.toString()
+            ) {
+              console.log(`📢 Creating mention notification for ${username}`)
+              const notification = new Notification({
+                recipient: mentionedMember.user._id,
+                sender: req.user.id,
+                type: 'task_mention',
+                title: 'You were mentioned',
+                message: `${req.user.username} mentioned you in "${task.title}"`,
+                link: `/projects/${task.project}`,
+                project: task.project,
+                task: task._id,
+              })
+
+              await notification.save()
+              await notification.populate('sender', 'username email')
+              io.to(`user:${mentionedMember.user._id}`).emit(
+                'notification:new',
+                notification
+              )
+            }
+          }
+        }
+      } catch (notifError) {
+        console.error(
+          '❌ Notification creation failed (comment was saved):',
+          notifError.message
+        )
+        console.error('Full error:', notifError)
+      }
     })
   } catch (error) {
-    console.error('❌ Create comment error:', error)
-    res.status(500).json({ message: 'Server error' })
+    console.error('Error creating comment:', error)
+    res.status(400).json({ message: error.message })
   }
 })
 
 // Update a comment
-router.put('/:id', authenticateToken, async (req, res) => {
+router.patch('/:commentId', auth, async (req, res) => {
   try {
-    const { text } = req.body
-
-    if (!text) {
-      return res.status(400).json({ message: 'Text is required' })
-    }
-
-    if (text.length > 1000) {
-      return res
-        .status(400)
-        .json({ message: 'Comment must be 1000 characters or less' })
-    }
-
-    const comment = await Comment.findById(req.params.id)
+    const comment = await Comment.findById(req.params.commentId)
 
     if (!comment) {
       return res.status(404).json({ message: 'Comment not found' })
     }
 
-    // Only the comment creator can edit it
-    if (comment.createdBy.toString() !== req.userId.toString()) {
+    if (comment.createdBy.toString() !== req.user.id.toString()) {
       return res
         .status(403)
-        .json({ message: 'You can only edit your own comments' })
+        .json({ message: 'Not authorized to edit this comment' })
     }
 
-    comment.text = text
+    comment.text = req.body.text
     await comment.save()
+    await comment.populate('createdBy', 'username email')
 
-    await comment.populate('createdBy', 'username')
-
-    console.log('✅ Comment updated:', { id: req.params.id })
-
-    res.json({
-      message: 'Comment updated successfully',
+    const io = req.app.get('io')
+    const task = await Task.findById(comment.task)
+    io.to(`project:${task.project}`).emit('comment:updated', {
+      taskId: comment.task,
       comment,
     })
+
+    res.json(comment)
   } catch (error) {
-    console.error('❌ Update comment error:', error)
-    res.status(500).json({ message: 'Server error' })
+    res.status(400).json({ message: error.message })
   }
 })
 
 // Delete a comment
-router.delete('/:id', authenticateToken, async (req, res) => {
+router.delete('/:commentId', auth, async (req, res) => {
   try {
-    const comment = await Comment.findById(req.params.id)
+    const comment = await Comment.findById(req.params.commentId)
 
     if (!comment) {
       return res.status(404).json({ message: 'Comment not found' })
     }
 
-    // Only the comment creator can delete it
-    if (comment.createdBy.toString() !== req.userId.toString()) {
+    if (comment.createdBy.toString() !== req.user.id.toString()) {
       return res
         .status(403)
-        .json({ message: 'You can only delete your own comments' })
+        .json({ message: 'Not authorized to delete this comment' })
     }
 
-    await Comment.deleteOne({ _id: req.params.id })
+    const taskId = comment.task
+    const task = await Task.findById(taskId)
 
-    console.log('✅ Comment deleted:', { id: req.params.id })
+    await comment.deleteOne()
 
-    res.json({ message: 'Comment deleted successfully' })
+    const io = req.app.get('io')
+    io.to(`project:${task.project}`).emit('comment:deleted', {
+      taskId,
+      commentId: req.params.commentId,
+    })
+
+    res.json({ message: 'Comment deleted' })
   } catch (error) {
-    console.error('❌ Delete comment error:', error)
-    res.status(500).json({ message: 'Server error' })
+    res.status(500).json({ message: error.message })
   }
 })
 

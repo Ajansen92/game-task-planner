@@ -12,7 +12,12 @@ function App() {
 
     if (token && savedUser) {
       setUser(JSON.parse(savedUser))
-      //socketService.connect(token)
+      // Disconnect first to ensure clean connection
+      socketService.disconnect()
+      // Small delay to ensure disconnect completes
+      setTimeout(() => {
+        socketService.connect(token)
+      }, 100)
     }
   }, [])
 
@@ -20,13 +25,13 @@ function App() {
     localStorage.setItem('token', token)
     localStorage.setItem('user', JSON.stringify(userData))
     setUser(userData)
-    //socketService.connect(token)
+    socketService.connect(token)
   }
 
   const handleLogout = () => {
     localStorage.removeItem('token')
     localStorage.removeItem('user')
-    //socketService.disconnect()
+    socketService.disconnect()
     setUser(null)
   }
 

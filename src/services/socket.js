@@ -8,7 +8,7 @@ class SocketService {
   connect(token) {
     if (this.socket?.connected) return
 
-    this.socket = io('http://localhost:5001', {
+    this.socket = io('http://localhost:5000', {
       auth: { token },
     })
 
@@ -45,6 +45,22 @@ class SocketService {
     if (this.socket) {
       this.socket.emit('leave-project', projectId)
       console.log('🚪 Left project room:', projectId)
+    }
+  }
+
+  // ===== GENERIC EVENT METHODS =====
+
+  // Generic method to listen to any event
+  on(eventName, callback) {
+    if (this.socket) {
+      this.socket.on(eventName, callback)
+    }
+  }
+
+  // Generic method to emit any event
+  emit(eventName, data) {
+    if (this.socket) {
+      this.socket.emit(eventName, data)
     }
   }
 

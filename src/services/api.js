@@ -99,7 +99,7 @@ export const tasksAPI = {
   },
 }
 
-// Auth API (for future use)
+// Auth API
 export const authAPI = {
   login: async (credentials) => {
     const response = await api.post('/auth/login', credentials)
@@ -162,14 +162,13 @@ export const invitationsAPI = {
 export const commentsAPI = {
   // Get all comments for a task
   getByTask: async (taskId) => {
-    const response = await api.get(`/comments/task/${taskId}`)
+    const response = await api.get(`/comments/${taskId}`)
     return response.data
   },
 
   // Create comment
   create: async (taskId, text) => {
-    const response = await api.post('/comments', {
-      taskId,
+    const response = await api.post(`/comments/${taskId}`, {
       text,
     })
     return response.data
@@ -177,7 +176,7 @@ export const commentsAPI = {
 
   // Update comment
   update: async (commentId, text) => {
-    const response = await api.put(`/comments/${commentId}`, {
+    const response = await api.patch(`/comments/${commentId}`, {
       text,
     })
     return response.data

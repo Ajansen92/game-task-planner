@@ -17,6 +17,9 @@ const io = new Server(server, {
   },
 })
 
+//Make io accessible to routes
+app.set('io', io)
+
 // Middleware
 app.use(
   cors({
@@ -32,12 +35,14 @@ const projectRoutes = require('./routes/projects')
 const taskRoutes = require('./routes/tasks')
 const invitationRoutes = require('./routes/invitations')
 const commentRoutes = require('./routes/comments')
+const notificationRoutes = require('./routes/Notifications')
 
 app.use('/api/auth', authRoutes)
 app.use('/api/projects', projectRoutes)
 app.use('/api/tasks', taskRoutes)
 app.use('/api/invitations', invitationRoutes)
 app.use('/api/comments', commentRoutes)
+app.use('/api/notifications', notificationRoutes)
 
 // MongoDB connection
 mongoose
@@ -54,19 +59,33 @@ app.get('/', (req, res) => {
 io.use((socket, next) => {
   const token = socket.handshake.auth.token
 
+  console.log('🔐 Socket auth attempt')
+  console.log(
+    'Token received:',
+    token ? token.substring(0, 20) + '...' : 'NONE'
+  )
+
   if (!token) {
-    console.log('⚠️ Socket connection without token - allowing anyway')
-    return next() // Allow connection even without token for now
+    console.log('❌ Rejecting: No token')
+    return next(new Error('No token provided'))
   }
 
   try {
     const jwt = require('jsonwebtoken')
+    console.log('JWT_SECRET exists:', !!process.env.JWT_SECRET)
+
     const decoded = jwt.verify(token, process.env.JWT_SECRET)
+    console.log('✅ Token verified successfully')
+    console.log('User ID:', decoded.userId)
+
     socket.userId = decoded.userId
+    socket.username = decoded.username || decoded.email
     next()
   } catch (err) {
-    console.log('⚠️ Invalid socket token - allowing anyway')
-    next() // Allow even if token is invalid for now
+    console.log('❌ Token verification failed')
+    console.log('Error name:', err.name)
+    console.log('Error message:', err.message)
+    return next(new Error('Invalid token'))
   }
 })
 
@@ -74,9 +93,13 @@ io.use((socket, next) => {
 io.on('connection', (socket) => {
   console.log('✅ User connected:', socket.id)
 
+  // Join personal user room for notifications
+  const userRoom = `user:${socket.userId}`
+  socket.join(userRoom)
+  console.log(`👤 User ${socket.userId} joined personal room: ${userRoom}`)
+
   // Join a project room
   socket.on('join-project', (projectId) => {
-    socket.join(`project-${projectId}`)
     console.log(`📂 User ${socket.id} joined project ${projectId}`)
   })
 
