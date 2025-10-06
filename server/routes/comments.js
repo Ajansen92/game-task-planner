@@ -1,7 +1,7 @@
 // server/routes/comments.js - FIXED MEMBER POPULATION
 const express = require('express')
 const router = express.Router()
-const Comment = require('../models/Comment')
+const Comment = require('../models/comment')
 const Task = require('../models/Task')
 const Project = require('../models/Project')
 const Notification = require('../models/Notification')
