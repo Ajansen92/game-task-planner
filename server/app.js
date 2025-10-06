@@ -5,6 +5,17 @@ const http = require('http')
 const { Server } = require('socket.io')
 require('dotenv').config()
 
+const fs = require('fs')
+const path = require('path')
+
+// Debug: Log what files exist
+console.log('Current directory:', __dirname)
+console.log(
+  'Models directory exists?',
+  fs.existsSync(path.join(__dirname, 'models'))
+)
+console.log('Models files:', fs.readdirSync(path.join(__dirname, 'models')))
+
 const app = express()
 const server = http.createServer(app)
 
