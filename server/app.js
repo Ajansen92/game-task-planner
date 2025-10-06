@@ -22,7 +22,7 @@ const server = http.createServer(app)
 // Socket.io setup with CORS
 const io = new Server(server, {
   cors: {
-    origin: ['http://localhost:5001', 'https://questboard-six.vercel.app/'],
+    origin: ['http://localhost:5001', 'https://questboard-six.vercel.app'],
     methods: ['GET', 'POST'],
     credentials: true,
   },
@@ -34,7 +34,7 @@ app.set('io', io)
 // Middleware
 app.use(
   cors({
-    origin: ['http://localhost:5001', 'https://questboard-six.vercel.app/'],
+    origin: ['http://localhost:5001', 'https://questboard-six.vercel.app'],
     credentials: true,
   })
 )
