@@ -46,7 +46,7 @@ const projectRoutes = require('./routes/projects')
 const taskRoutes = require('./routes/tasks')
 const invitationRoutes = require('./routes/invitations')
 const commentRoutes = require('./routes/comments')
-const notificationRoutes = require('./routes/Notifications')
+const notificationRoutes = require('./routes/notifications')
 const userRoutes = require('./routes/users')
 
 app.use('/api/auth', authRoutes)
