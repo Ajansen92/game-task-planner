@@ -1,7 +1,7 @@
 // Team collaboration routes
 const express = require('express')
 const router = express.Router()
-const Project = require('../models/project')
+const Project = require('../models/Project')
 const User = require('../models/User')
 const authenticateToken = require('../middleware/auth')
 

@@ -1,8 +1,8 @@
 // Invitation routes
 const express = require('express')
 const router = express.Router()
-const Invitation = require('../models/invitation')
-const Project = require('../models/project')
+const Invitation = require('../models/Invitation')
+const Project = require('../models/Project')
 const User = require('../models/User')
 
 // Middleware to authenticate token

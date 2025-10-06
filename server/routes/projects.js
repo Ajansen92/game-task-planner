@@ -1,8 +1,8 @@
 // Project routes
 const express = require('express')
 const router = express.Router()
-const Project = require('../models/project')
-const Task = require('../models/task')
+const Project = require('../models/Project')
+const Task = require('../models/Task')
 
 // Middleware to authenticate token
 const authenticateToken = require('../middleware/auth')
