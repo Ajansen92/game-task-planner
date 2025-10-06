@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import Dashboard from './components/Dashboard'
-import Auth from './components/Auth'
+import Dashboard from './components/Dashboard.jsx'
+import Auth from './components/Auth.jsx'
 import socketService from './services/socket'
 
 function App() {
