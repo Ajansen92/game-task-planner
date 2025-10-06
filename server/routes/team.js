@@ -2,7 +2,7 @@
 const express = require('express')
 const router = express.Router()
 const Project = require('../models/project')
-const User = require('../models/user')
+const User = require('../models/User')
 const authenticateToken = require('../middleware/auth')
 
 // Get team members for a project

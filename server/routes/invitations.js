@@ -3,7 +3,7 @@ const express = require('express')
 const router = express.Router()
 const Invitation = require('../models/invitation')
 const Project = require('../models/project')
-const User = require('../models/user')
+const User = require('../models/User')
 
 // Middleware to authenticate token
 const authenticateToken = require('../middleware/auth')
