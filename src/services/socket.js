@@ -1,5 +1,7 @@
 import io from 'socket.io-client'
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000'
+
 class SocketService {
   constructor() {
     this.socket = null
@@ -8,7 +10,7 @@ class SocketService {
   connect(token) {
     if (this.socket?.connected) return
 
-    this.socket = io('http://localhost:5000', {
+    this.socket = io(API_URL, {
       auth: { token },
     })
 

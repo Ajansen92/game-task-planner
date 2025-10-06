@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { Lock, Eye, EyeOff } from 'lucide-react'
 import './ChangePassword.css'
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000'
+
 export default function ChangePassword() {
   const [formData, setFormData] = useState({
     currentPassword: '',
@@ -51,20 +53,17 @@ export default function ChangePassword() {
     try {
       setLoading(true)
 
-      const response = await fetch(
-        'http://localhost:5000/api/users/change-password',
-        {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-          body: JSON.stringify({
-            currentPassword: formData.currentPassword,
-            newPassword: formData.newPassword,
-          }),
-        }
-      )
+      const response = await fetch(`${API_URL}/api/users/change-password`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify({
+          currentPassword: formData.currentPassword,
+          newPassword: formData.newPassword,
+        }),
+      })
 
       if (!response.ok) {
         const data = await response.json()

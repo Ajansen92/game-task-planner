@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { ArrowLeft, User, Calendar, FileText } from 'lucide-react'
 import './PublicProfile.css'
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000'
+
 export default function PublicProfile({ userId, onBack }) {
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -16,14 +18,11 @@ export default function PublicProfile({ userId, onBack }) {
       setLoading(true)
       setError('')
 
-      const response = await fetch(
-        `http://localhost:5000/api/users/public/${userId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-        }
-      )
+      const response = await fetch(`${API_URL}/api/users/public/${userId}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      })
 
       if (!response.ok) {
         throw new Error('Failed to load profile')

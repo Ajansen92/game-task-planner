@@ -11,6 +11,8 @@ import {
 import ChangePassword from './ChangePassword'
 import './UserProfile.css'
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000'
+
 export default function UserProfile({ user, onBack, onProfileUpdate }) {
   const [activeTab, setActiveTab] = useState('profile')
   const [formData, setFormData] = useState({
@@ -30,7 +32,7 @@ export default function UserProfile({ user, onBack, onProfileUpdate }) {
 
   const loadProfile = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/users/profile', {
+      const response = await fetch(`${API_URL}/api/users/profile`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
@@ -79,7 +81,7 @@ export default function UserProfile({ user, onBack, onProfileUpdate }) {
       setLoading(true)
       setError('')
 
-      const response = await fetch('http://localhost:5000/api/users/avatar', {
+      const response = await fetch(`${API_URL}/api/users/avatar`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -117,7 +119,7 @@ export default function UserProfile({ user, onBack, onProfileUpdate }) {
       setLoading(true)
       setError('')
 
-      const response = await fetch('http://localhost:5000/api/users/avatar', {
+      const response = await fetch(`${API_URL}/api/users/avatar`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -149,7 +151,7 @@ export default function UserProfile({ user, onBack, onProfileUpdate }) {
     try {
       setLoading(true)
 
-      const response = await fetch('http://localhost:5000/api/users/profile', {
+      const response = await fetch(`${API_URL}/api/users/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

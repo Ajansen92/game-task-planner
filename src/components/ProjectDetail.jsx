@@ -18,6 +18,8 @@ import { tasksAPI } from '../services/api'
 import socketService from '../services/socket'
 import './ProjectDetail.css'
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000'
+
 export default function ProjectDetail({
   project,
   onBack,
@@ -42,7 +44,7 @@ export default function ProjectDetail({
       try {
         setLoadingMembers(true)
         const response = await fetch(
-          `http://localhost:5000/api/projects/${project.id}/members`,
+          `${API_URL}/api/projects/${project.id}/members`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -309,7 +311,7 @@ export default function ProjectDetail({
     const fetchMembers = async () => {
       try {
         const response = await fetch(
-          `http://localhost:5000/api/projects/${project.id}/members`,
+          `${API_URL}/api/projects/${project.id}/members`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem('token')}`,
